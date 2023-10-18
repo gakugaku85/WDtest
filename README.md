@@ -1,0 +1,2 @@
+# WDtest
+wasserstain distanceのテスト
