@@ -13,7 +13,7 @@ def save_image_and_hist(image, filename):
     plt.savefig("images/{}.png".format(filename))
 
     plt.clf()
-    plt.hist(image.ravel(), bins=256, color="red", alpha=0.7)
+    plt.hist(image.ravel(), bins=256, color="black", alpha=0.7)
     plt.xlabel("Pixel Intensity")
     plt.ylabel("Count")
     plt.savefig("images/{}_hist.png".format(filename))
@@ -35,13 +35,13 @@ original_image = Image.fromarray(image)
 
 save_image_and_hist(image, "original_image")
 
-blurred_image = cv2.GaussianBlur(image, (5, 5), 0)
+blurred_image = cv2.GaussianBlur(image, (5, 5), 1)  # カーネル=(5, 5)、標準偏差1
 
 save_image_and_hist(blurred_image, "blurred_image")
 
 noise = np.random.normal(1, 3, blurred_image.shape).astype(np.float64)
+# 平均1、標準偏差3の正規分布に従う乱数を生成
 noisy_image = cv2.add(blurred_image, noise)
-# 0から256の範囲に収める
 noisy_image = np.clip(noisy_image, 0, 255).astype(np.float64)
 
 save_image_and_hist(noisy_image, "noisy_image")
@@ -63,11 +63,9 @@ for i in range(180):
     )
 
 # Display the first 5 rotated images as a sample
-# fig, axarr = plt.subplots(1, 5, figsize=(15, 3))
-
-# for i, ax in enumerate(axarr):
-#     ax.imshow(rotated_images[i], cmap='gray')
-#     ax.axis('off')
-
-# plt.tight_layout()
-# plt.savefig('images/rotated_images.png')
+fig, axarr = plt.subplots(1, 5, figsize=(15, 3))
+for i, ax in enumerate(axarr):
+    ax.imshow(rotated_images[i * 36], cmap="gray")
+    ax.axis("off")
+plt.tight_layout()
+plt.savefig("images/rotated_images.png")
