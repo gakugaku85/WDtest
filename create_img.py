@@ -5,6 +5,20 @@ import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
 
+
+def save_image_and_hist(image, filename):
+    plt.clf()
+    plt.imshow(image, cmap="gray")
+    plt.axis("off")
+    plt.savefig("images/{}.png".format(filename))
+
+    plt.clf()
+    plt.hist(image.ravel(), bins=256, color="red", alpha=0.7)
+    plt.xlabel("Pixel Intensity")
+    plt.ylabel("Count")
+    plt.savefig("images/{}_hist.png".format(filename))
+
+
 os.makedirs("images", exist_ok=True)
 # Create a 64x64 black image
 image = np.zeros((64, 64))
@@ -19,46 +33,18 @@ image[start_row:end_row, 26:36] = 64
 # Convert the NumPy array to a PIL image for easier rotation
 original_image = Image.fromarray(image)
 
-# Display the original image with the white bar
-plt.imshow(original_image, cmap="gray")
-plt.axis("off")
-plt.savefig("images/original_image.png")
-
-plt.clf()
-
-plt.hist(image.ravel(), bins=256, color="red", alpha=0.7)
-plt.xlabel("Pixel Intensity")
-plt.ylabel("Count")
-plt.savefig("images/original_histogram.png")
+save_image_and_hist(image, "original_image")
 
 blurred_image = cv2.GaussianBlur(image, (5, 5), 0)
 
-plt.clf()
-plt.imshow(blurred_image, cmap="gray")
-plt.axis("off")
-plt.savefig("images/blurred_image.png")
-
-plt.clf()
-plt.hist(blurred_image.ravel(), bins=256, color="green", alpha=0.7)
-plt.xlabel("Pixel Intensity")
-plt.ylabel("Count")
-plt.savefig("images/blurred_histogram.png")
+save_image_and_hist(blurred_image, "blurred_image")
 
 noise = np.random.normal(1, 3, blurred_image.shape).astype(np.float64)
 noisy_image = cv2.add(blurred_image, noise)
 # 0から256の範囲に収める
 noisy_image = np.clip(noisy_image, 0, 255).astype(np.float64)
 
-plt.clf()
-plt.imshow(noisy_image, cmap="gray")
-plt.axis("off")
-plt.savefig("images/noisy_image.png")
-
-plt.clf()
-plt.hist(noisy_image.ravel(), bins=256, color="black", alpha=0.7)
-plt.xlabel("Pixel Intensity")
-plt.ylabel("Count")
-plt.savefig("images/noisy_histogram.png")
+save_image_and_hist(noisy_image, "noisy_image")
 
 noisy_image = Image.fromarray(noisy_image.astype(np.uint8))
 
@@ -71,9 +57,10 @@ for i in range(180):
         i, resample=Image.BICUBIC, center=(32, 32)
     )
     rotated_images.append(rotated_image)
-    plt.imshow(rotated_image, cmap="gray")
-    plt.axis("off")
-    plt.savefig("images/rotated_images/{:03d}.png".format(i))
+
+    save_image_and_hist(
+        np.array(rotated_image), "rotated_images/{:03d}".format(i + 1)
+    )
 
 # Display the first 5 rotated images as a sample
 # fig, axarr = plt.subplots(1, 5, figsize=(15, 3))
