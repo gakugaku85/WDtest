@@ -33,18 +33,31 @@ image[start_row:end_row, 26:36] = 64
 # Convert the NumPy array to a PIL image for easier rotation
 original_image = Image.fromarray(image)
 
-save_image_and_hist(image, "original_image")
+kennel_size = 3
+blur_sigma = 0
+mean = 0
+noise_sigma = 3
 
-blurred_image = cv2.GaussianBlur(image, (5, 5), 1)  # カーネル=(5, 5)、標準偏差1
+blurred_image = cv2.GaussianBlur(image, (kennel_size, kennel_size), blur_sigma)
 
-save_image_and_hist(blurred_image, "blurred_image")
-
-noise = np.random.normal(1, 3, blurred_image.shape).astype(np.float64)
-# 平均1、標準偏差3の正規分布に従う乱数を生成
+noise = np.random.normal(mean, noise_sigma, blurred_image.shape).astype(
+    np.float64
+)
 noisy_image = cv2.add(blurred_image, noise)
 noisy_image = np.clip(noisy_image, 0, 255).astype(np.float64)
 
-save_image_and_hist(noisy_image, "noisy_image")
+save_image_and_hist(
+    noisy_image,
+    "test_images/noisy_image_"
+    + "kennel="
+    + str(kennel_size)
+    + "_mean="
+    + str(mean)
+    + "_b_sigma="
+    + str(blur_sigma)
+    + "_n_sigma="
+    + str(noise_sigma),
+)
 
 noisy_image = Image.fromarray(noisy_image.astype(np.uint8))
 
@@ -57,7 +70,6 @@ for i in range(180):
         i, resample=Image.BICUBIC, center=(32, 32)
     )
     rotated_images.append(rotated_image)
-
     save_image_and_hist(
         np.array(rotated_image), "rotated_images/{:03d}".format(i + 1)
     )

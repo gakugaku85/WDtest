@@ -178,3 +178,4 @@ pyrightconfig.json
 data/*
 result/*
 images/rotated_images/*
+images/test_images/*
