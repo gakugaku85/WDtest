@@ -28,11 +28,11 @@ start_row = (image.shape[0] - 10) // 2
 end_row = start_row + 10
 image[start_row:end_row, :26] = 196
 image[start_row:end_row, 36:] = 196
-image[start_row:end_row, 26:36] = 64
+image[start_row:end_row, 26:36] = 128
 
-kennel_sizes = [3, 5, 7]
-blur_sigmas = [0, 1, 2]
-means = [0, 50, 100]
+kennel_sizes = [7]
+blur_sigmas = [0, 5, 10, 15, 20]
+means = [0]
 noise_sigmas = [3, 5, 7]
 
 for kennel_size in kennel_sizes:
