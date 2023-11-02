@@ -25,10 +25,10 @@ image = np.zeros((64, 64))
 
 # Draw a white horizontal bar in the center of the image
 start_row = (image.shape[0] - 10) // 2
-end_row = start_row + 10
-image[start_row:end_row, :26] = 196
-image[start_row:end_row, 36:] = 196
-image[start_row:end_row, 26:36] = 64
+end_row = start_row + 4
+image[start_row:end_row, 4:26] = 196
+image[start_row:end_row, 36:-4] = 196
+image[start_row:end_row, 26:36] = 128
 
 # Convert the NumPy array to a PIL image for easier rotation
 original_image = Image.fromarray(image)
