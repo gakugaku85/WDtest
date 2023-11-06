@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
 
+
 def save_image(image, filename):
     plt.clf()
     plt.imshow(image, cmap="gray")
@@ -18,9 +19,20 @@ def calculate_snr(image):
     snr = 20 * np.log10(signal_mean / noise_std)
     return snr
 
+def AddGaussianNoise(image, mean, sigma):
+    noise = np.random.normal(mean, sigma, np.shape(image))
+    noisy_image = image + noise
+    noisy_image[noisy_image > 255] = 255
+    noisy_image[noisy_image < 0] = 0
+    noisy_image = noisy_image.astype(np.uint8)    # Float -> Uint
+    return noisy_image
+
 image = np.zeros((64, 64)) + 64
 center_line = image.shape[0] // 2
 image[center_line-2:center_line+2, :] = 196
+
+noisy_image = AddGaussianNoise(image, 0, 4)
+Image.fromarray(noisy_image.astype(np.uint8)).save("images/noisy_center_line.png")
 
 original_snr = calculate_snr(image)
 print(f"元の画像のSN比: {original_snr} dB")
