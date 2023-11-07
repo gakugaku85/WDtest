@@ -32,7 +32,7 @@ save_image_hist(image, "images/original_image")
 kennel_size = 7
 mean = 0
 blur_sigma = 1
-noise_sigma = 32
+noise_sigma = 128
 
 blurred_image = cv2.GaussianBlur(image, (kennel_size, kennel_size), blur_sigma)
 
