@@ -38,10 +38,12 @@ blurred_image = cv2.GaussianBlur(image, (kennel_size, kennel_size), blur_sigma)
 
 noise = np.random.normal(mean, noise_sigma, blurred_image.shape).astype(np.float64)
 noisy_image = cv2.add(blurred_image, noise)
+#0~255に正規化
+noisy_image = (noisy_image - np.min(noisy_image)) / (np.max(noisy_image) - np.min(noisy_image)) * 255
 # noisy_image = np.clip(noisy_image, 0, 255).astype(np.float64)
 
 Image.fromarray(noisy_image.astype(np.uint8)).save("images/noisy_pil" + "_bsigma=" + str(blur_sigma) + "_nsigma=" + str(noise_sigma) + ".png")
-save_image_hist(noisy_image, "noisy_" + "_bsigma=" + str(blur_sigma) + "_nsigma=" + str(noise_sigma))
+save_image_hist(noisy_image, "images/noisy_" + "_bsigma=" + str(blur_sigma) + "_nsigma=" + str(noise_sigma))
 
 original_snr = calculate_snr(image)
 noisy_snr = calculate_snr(noisy_image)
