@@ -21,17 +21,6 @@ def save_image_hist(image, filename):
     plt.savefig("{}_hist.png".format(filename))
 
 def concentration_profile(image, filename):
-    # # x direction
-    # x_vals = np.linspace(0, image.shape[0] - 1, image.shape[0])
-    # y_vals = np.linspace(32, 32, image.shape[1])
-    # pixel_values = [image[int(y), int(x)] for x, y in zip(x_vals, y_vals)]
-
-    # plt.clf()
-    # plt.plot(pixel_values, label="Pixel values along the line", color='blue')
-    # plt.title("Pixel Values along the Center Line")
-    # plt.xlabel("Position along the line")
-    # plt.ylabel("Pixel Value")
-    # plt.savefig("{}_gram_x.png".format(filename))
 
     # y direction
     x_vals = np.linspace(0, 0, 13)
@@ -41,7 +30,7 @@ def concentration_profile(image, filename):
         av_pixel = 0
         for i in range(64):
             av_pixel += image[int(y), int(i)]
-        av_pixel /= 10
+        av_pixel /= 64
         pixel_values.append(av_pixel)
 
     plt.clf()
