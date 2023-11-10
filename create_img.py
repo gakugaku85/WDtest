@@ -21,16 +21,15 @@ def save_image_hist(image, filename):
     plt.savefig("{}_hist.png".format(filename))
 
 def concentration_profile(image, filename):
-
     # y direction
     x_vals = np.linspace(0, 0, 13)
     y_vals = np.linspace(25, 38, 13)
     pixel_values = []
     for x, y in zip(x_vals, y_vals):
         av_pixel = 0
-        for i in range(64):
+        for i in range(image.shape[1]):
             av_pixel += image[int(y), int(i)]
-        av_pixel /= 64
+        av_pixel /= image.shape[1]
         pixel_values.append(av_pixel)
 
     plt.clf()
@@ -39,6 +38,25 @@ def concentration_profile(image, filename):
     plt.xlabel("Position along the line")
     plt.ylabel("Pixel Value")
     plt.savefig("{}_gram_y.png".format(filename))
+
+def create_noisy_image(image, blur_sigma, noise_sigma):
+    kennel_size = 7
+    mean = 0
+
+    blurred_image = cv2.GaussianBlur(image, (kennel_size, kennel_size), blur_sigma)
+
+    noise = np.random.normal(mean, noise_sigma, blurred_image.shape).astype(np.float64)
+    noisy_image = cv2.add(blurred_image, noise)
+
+    Image.fromarray(noisy_image.astype(np.uint8)).save("images/noisy" + "_bsigma=" + str(blur_sigma) + "_nsigma=" + str(noise_sigma) + "_pil.png")
+    save_image_hist(noisy_image, "images/noisy" + "_bsigma=" + str(blur_sigma) + "_nsigma=" + str(noise_sigma))
+    concentration_profile(noisy_image, "images/noisy" + "_bsigma=" + str(blur_sigma) + "_nsigma=" + str(noise_sigma))
+    sitk.WriteImage(sitk.GetImageFromArray(noisy_image), "images/noisy_" + "_bsigma=" + str(blur_sigma) + "_nsigma=" + str(noise_sigma) + ".mhd")
+
+    noisy_snr = calculate_snr(noisy_image, image)
+    print(f"{noise_sigma}のガウスノイズを加えた後のSN比: {noisy_snr} dB")
+
+    return noisy_image
 
 os.makedirs("images", exist_ok=True)
 
@@ -51,28 +69,8 @@ save_image_hist(image, "images/original_image")
 concentration_profile(image, "images/original_image")
 sitk.WriteImage(sitk.GetImageFromArray(image), "images/original_image.mhd")
 
-kennel_size = 7
-mean = 0
-blur_sigma = 1
-noise_sigma = 32
-
-blurred_image = cv2.GaussianBlur(image, (kennel_size, kennel_size), blur_sigma)
-
-noise = np.random.normal(mean, noise_sigma, blurred_image.shape).astype(np.float64)
-noisy_image = cv2.add(blurred_image, noise)
-#0~255に正規化
-# noisy_image = (noisy_image - np.min(noisy_image)) / (np.max(noisy_image) - np.min(noisy_image)) * 255
-# noisy_image = np.clip(noisy_image, 0, 255).astype(np.float64)
-
-Image.fromarray(noisy_image.astype(np.uint8)).save("images/noisy" + "_bsigma=" + str(blur_sigma) + "_nsigma=" + str(noise_sigma) + "_pil.png")
-save_image_hist(noisy_image, "images/noisy" + "_bsigma=" + str(blur_sigma) + "_nsigma=" + str(noise_sigma))
-concentration_profile(noisy_image, "images/noisy" + "_bsigma=" + str(blur_sigma) + "_nsigma=" + str(noise_sigma))
-sitk.WriteImage(sitk.GetImageFromArray(noisy_image), "images/noisy_" + "_bsigma=" + str(blur_sigma) + "_nsigma=" + str(noise_sigma) + ".mhd")
-
-# original_snr = calculate_snr(image, image)
-# print(f"元の画像のSN比: {original_snr} dB")
-noisy_snr = calculate_snr(noisy_image, image)
-print(f"ノイズを加えた後のSN比: {noisy_snr} dB")
+for i in range(1, 8):
+    create_noisy_image(image, 1, 2 ** i)
 
 
 # noisy_image = Image.fromarray(noisy_image.astype(np.uint8))
