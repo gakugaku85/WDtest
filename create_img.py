@@ -3,15 +3,23 @@ import os
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
-from PIL import Image
 import SimpleITK as sitk
+from PIL import Image
 
-def calculate_snr(image, original_image):
-    signal_mean = np.mean(image)
-    noise = image - original_image
-    noise_std = np.std(noise)
-    snr = 20 * np.log10(signal_mean / noise_std)
+
+def calculate_snr(image, noise_sigma):
+    signal = image.max() - image.min()
+    snr = signal / noise_sigma
     return snr
+
+
+def save_image(image, filename):
+    Image.fromarray(image.astype(np.uint8)).save("{}.png".format(filename))
+
+
+def save_image_mhd(image, filename):
+    sitk.WriteImage(sitk.GetImageFromArray(image), "{}.mhd".format(filename))
+
 
 def save_image_hist(image, filename):
     plt.clf()
@@ -19,6 +27,7 @@ def save_image_hist(image, filename):
     plt.xlabel("Pixel Intensity")
     plt.ylabel("Count")
     plt.savefig("{}_hist.png".format(filename))
+
 
 def concentration_profile(image, filename):
     # y direction
@@ -33,11 +42,12 @@ def concentration_profile(image, filename):
         pixel_values.append(av_pixel)
 
     plt.clf()
-    plt.plot(pixel_values, label="Pixel values along the line", color='blue')
+    plt.plot(pixel_values, label="Pixel values along the line", color="blue")
     plt.title("Pixel Values along the Center Line")
     plt.xlabel("Position along the line")
     plt.ylabel("Pixel Value")
     plt.savefig("{}_gram_y.png".format(filename))
+
 
 def create_noisy_image(image, blur_sigma, noise_sigma):
     kennel_size = 7
@@ -48,50 +58,47 @@ def create_noisy_image(image, blur_sigma, noise_sigma):
     noise = np.random.normal(mean, noise_sigma, blurred_image.shape).astype(np.float64)
     noisy_image = cv2.add(blurred_image, noise)
 
-    Image.fromarray(noisy_image.astype(np.uint8)).save("images/noisy" + "_bsigma=" + str(blur_sigma) + "_nsigma=" + str(noise_sigma) + "_pil.png")
-    save_image_hist(noisy_image, "images/noisy" + "_bsigma=" + str(blur_sigma) + "_nsigma=" + str(noise_sigma))
-    concentration_profile(noisy_image, "images/noisy" + "_bsigma=" + str(blur_sigma) + "_nsigma=" + str(noise_sigma))
-    sitk.WriteImage(sitk.GetImageFromArray(noisy_image), "images/noisy_" + "_bsigma=" + str(blur_sigma) + "_nsigma=" + str(noise_sigma) + ".mhd")
-
-    noisy_snr = calculate_snr(noisy_image, image)
-    print(f"{noise_sigma}のガウスノイズを加えた後のSN比: {noisy_snr} dB")
+    noisy_snr = calculate_snr(image, noise_sigma)
 
     return noisy_image
 
-os.makedirs("images", exist_ok=True)
 
-image = np.zeros((64, 64)) + 64
+def rotate_image(image, angle):
+    center = tuple(np.array(image.shape) / 2)
+    rotation_matrix = cv2.getRotationMatrix2D(center, angle, 1.0)
+    rotated_image = cv2.warpAffine(
+        image,
+        rotation_matrix,
+        image.shape[1::-1],
+        flags=cv2.INTER_NEAREST,
+        borderMode=cv2.BORDER_CONSTANT,
+        borderValue=0,
+    )
+    h, w = rotated_image.shape
+    center_h, center_w = h // 2, w // 2
+
+    rotated_image = rotated_image[
+        center_h - 32 : center_h + 32, center_w - 32 : center_w + 32
+    ]
+
+    return rotated_image
+
+
+os.makedirs("images", exist_ok=True)
+os.makedirs("images/rotated", exist_ok=True)
+os.makedirs("images/rotated_mhd", exist_ok=True)
+
+image = np.zeros((100, 100)) + 64
 center_line = image.shape[0] // 2
 image[center_line - 2 : center_line + 1, :] = 192
 
-Image.fromarray(image.astype(np.uint8)).save("images/original_pil.png")
-save_image_hist(image, "images/original_image")
-concentration_profile(image, "images/original_image")
-sitk.WriteImage(sitk.GetImageFromArray(image), "images/original_image.mhd")
-
-for i in range(1, 8):
-    create_noisy_image(image, 1, 2 ** i)
-
-
-# noisy_image = Image.fromarray(noisy_image.astype(np.uint8))
-
-# Rotate the original image by 1 degree at a time and save each rotation
-# rotated_images = []
-
-# os.makedirs("images/rotated_images", exist_ok=True)
-# for i in range(180):
-#     rotated_image = noisy_image.rotate(
-#         i, resample=Image.BICUBIC, center=(32, 32)
-#     )
-#     rotated_images.append(rotated_image)
-#     save_image_and_hist(
-#         np.array(rotated_image), "rotated_images/{:03d}".format(i + 1)
-#     )
-
-# Display the first 5 rotated images as a sample
-# fig, axarr = plt.subplots(1, 5, figsize=(15, 3))
-# for i, ax in enumerate(axarr):
-#     ax.imshow(rotated_images[i * 36], cmap="gray")
-#     ax.axis("off")
-# plt.tight_layout()
-# plt.savefig("images/rotated_images.png")
+for i in range(5, 8):
+    os.makedirs("images/noisy_rotated_{}".format(2**i), exist_ok=True)
+    os.makedirs("images/noisy_rotated_{}_mhd".format(2**i), exist_ok=True)
+    for j in range(0, 180):
+        rotated_image = rotate_image(image, j)
+        noisy_image = create_noisy_image(rotated_image, 1, 2**i)
+        save_image(noisy_image, "images/noisy_rotated_{}/rotated_{}".format(2**i, j))
+        save_image_mhd(
+            noisy_image, "images/noisy_rotated_{}_mhd/rotated_{}".format(2**i, j)
+        )
