@@ -85,8 +85,6 @@ def rotate_image(image, angle):
 
 
 os.makedirs("images", exist_ok=True)
-os.makedirs("images/rotated", exist_ok=True)
-os.makedirs("images/rotated_mhd", exist_ok=True)
 
 image = np.zeros((100, 100)) + 64
 center_line = image.shape[0] // 2
@@ -95,10 +93,20 @@ image[center_line - 2 : center_line + 1, :] = 192
 for i in range(5, 8):
     os.makedirs("images/noisy_rotated_{}".format(2**i), exist_ok=True)
     os.makedirs("images/noisy_rotated_{}_mhd".format(2**i), exist_ok=True)
+    noisy_images = []
     for j in range(0, 180):
         rotated_image = rotate_image(image, j)
         noisy_image = create_noisy_image(rotated_image, 1, 2**i)
+        noisy_images.append(noisy_image)
         save_image(noisy_image, "images/noisy_rotated_{}/rotated_{}".format(2**i, j))
         save_image_mhd(
             noisy_image, "images/noisy_rotated_{}_mhd/rotated_{}".format(2**i, j)
         )
+
+    # Display the first 5 rotated images as a sample
+    fig, axarr = plt.subplots(1, 5, figsize=(15, 3))
+    for k, ax in enumerate(axarr):
+        ax.imshow(noisy_images[k * 36], cmap="gray")
+        ax.axis("off")
+    plt.tight_layout()
+    plt.savefig("images/rotated_images_{}.png".format(2**i))
