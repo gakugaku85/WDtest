@@ -7,4 +7,6 @@ python3 create_img.py
 ```
 
 作成した画像をダウンサンプリングします。
-```python3 downsample.py```
+```
+python3 downsample.py
+```
