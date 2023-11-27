@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import SimpleITK as sitk
 from PIL import Image
 
+from torchvision.transforms import functional as trans_fn
+
 
 def resample_mhd(input_path, output_path, target_size):
     mhd_files = [f for f in os.listdir(input_path) if f.endswith(".mhd")]
@@ -12,9 +14,20 @@ def resample_mhd(input_path, output_path, target_size):
     for mhd_file in mhd_files:
         input_file_path = os.path.join(input_path, mhd_file)
         image = sitk.ReadImage(input_file_path)
-        resampled_image = sitk.Resample(image, target_size, interpolator=sitk.sitkBSpline)
+        image_array = sitk.GetArrayFromImage(image)
+
+        resample_mhd = cv2.resize(image_array, target_size, interpolation=cv2.INTER_CUBIC)
+        resample_mhd_image = sitk.GetImageFromArray(resample_mhd)
         output_file_path = os.path.join(output_path, mhd_file)
-        sitk.WriteImage(resampled_image, output_file_path)
+        sitk.WriteImage(resample_mhd_image, output_file_path)
+
+        # pil_image = sitk.GetArrayFromImage(image)
+        # nda_img = Image.fromarray(pil_image)
+        # img = trans_fn.resize(nda_img, target_size, interpolation=Image.BILINEAR)
+        # img = sitk.GetImageFromArray(img)
+
+        # # resampled_image = sitk.Resample(image, target_size, interpolator=sitk.sitkBSpline)
+        # sitk.WriteImage(img, output_file_path)
 
 
 def resample_png(input_path, output_path, target_size):
@@ -44,22 +57,22 @@ if __name__ == "__main__":
         input_folder = "images/noisy_rotated_{}".format(2**i)
         input_folder_mhd = "images/noisy_rotated_{}_mhd".format(2**i)
 
-        output_folder = "images/hr_{}".format(2**i)
-        output_folder_mhd = "images/hr_{}_mhd".format(2**i)
+        output_folder = "images/sigma{}/hr_64".format(2**i)
+        output_folder_mhd = output_folder + "_mhd"
         os.makedirs(output_folder, exist_ok=True)
         os.makedirs(output_folder_mhd, exist_ok=True)
         resample_png(input_folder, output_folder, hr_size)
         resample_mhd(input_folder_mhd, output_folder_mhd, hr_size)
 
-        lr_folder = "images/lr_{}".format(2**i)
-        lr_folder_mhd = "images/lr_{}_mhd".format(2**i)
+        lr_folder = "images/sigma{}/lr_16".format(2**i)
+        lr_folder_mhd = lr_folder + "_mhd"
         os.makedirs(lr_folder, exist_ok=True)
         os.makedirs(lr_folder_mhd, exist_ok=True)
         resample_png(input_folder, lr_folder, lr_size)
         resample_mhd(input_folder_mhd, lr_folder_mhd, lr_size)
 
-        output_folder = "images/sr_{}".format(2**i)
-        output_folder_mhd = "images/sr_{}_mhd".format(2**i)
+        output_folder = "images/sigma{}/sr_16_64".format(2**i)
+        output_folder_mhd = output_folder + "_mhd"
         os.makedirs(output_folder, exist_ok=True)
         os.makedirs(output_folder_mhd, exist_ok=True)
         resample_png(lr_folder, output_folder, hr_size)
