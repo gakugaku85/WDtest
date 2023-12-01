@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import SimpleITK as sitk
 from PIL import Image
+from tqdm import tqdm
 
 
 def calculate_snr(image, noise_sigma):
@@ -84,29 +85,54 @@ def rotate_image(image, angle):
     return rotated_image
 
 
+def resize_mhd_save(image_array, output_path, target_size, j):
+    os.makedirs(output_path, exist_ok=True)
+    resized_mhd = cv2.resize(image_array, target_size, interpolation=cv2.INTER_CUBIC)
+    resample_mhd_image = sitk.GetImageFromArray(resized_mhd)
+    sitk.WriteImage(resample_mhd_image, output_path + "/{}.mhd".format(j))
+
+    return resized_mhd
+
+def normalize_image(image_array):
+    image = sitk.GetImageFromArray(image_array)
+    upper_percentile = np.percentile(image_array, 99.95)
+    lower_percentile = np.percentile(image_array, 0.05)
+    normalized_image_array = np.clip((image_array - lower_percentile) / (upper_percentile - lower_percentile), 0, 1)
+    normalized_image_array = (normalized_image_array * 255).astype(np.uint8)
+    normalized_image = sitk.GetImageFromArray(normalized_image_array)
+    normalized_image.SetOrigin(image.GetOrigin())
+    normalized_image.SetSpacing(image.GetSpacing())
+    normalized_image.SetDirection(image.GetDirection())
+
+    norm_image = sitk.GetArrayFromImage(normalized_image)
+
+    return norm_image
+
+
 os.makedirs("images", exist_ok=True)
 
 image = np.zeros((100, 100)) + 64
 center_line = image.shape[0] // 2
-image[center_line - 2 : center_line + 1, :] = 192
+image[center_line - 1 : center_line + 1, :] = 192
+hr_size = (64, 64)
+lr_size = (16, 16)
+line_space = 2
 
-for i in range(5, 8):
-    os.makedirs("images/noisy_rotated_{}".format(2**i), exist_ok=True)
-    os.makedirs("images/noisy_rotated_{}_mhd".format(2**i), exist_ok=True)
+for i in range(5, 6):
+    os.makedirs("images/noisy_rotated_{}_mhd_{}".format(2**i, line_space), exist_ok=True)
+    hr_folder = "images/sigma{}_{}/hr_64".format(2**i, line_space)
+    hr_folder_mhd = hr_folder + "_mhd"
+    lr_folder = "images/sigma{}_{}/lr_16".format(2**i, line_space)
+    lr_folder_mhd = lr_folder + "_mhd"
+    sr_folder = "images/sigma{}_{}/sr_16_64".format(2**i, line_space)
+    sr_folder_mhd = sr_folder + "_mhd"
     noisy_images = []
-    for j in range(0, 180):
+    for j in tqdm(range(0, 180), desc="Creating images"):
         rotated_image = rotate_image(image, j)
         noisy_image = create_noisy_image(rotated_image, 1, 2**i)
-        noisy_images.append(noisy_image)
-        save_image(noisy_image, "images/noisy_rotated_{}/rotated_{}".format(2**i, j))
-        save_image_mhd(
-            noisy_image, "images/noisy_rotated_{}_mhd/rotated_{}".format(2**i, j)
-        )
 
-    # Display the first 5 rotated images as a sample
-    fig, axarr = plt.subplots(1, 5, figsize=(15, 3))
-    for k, ax in enumerate(axarr):
-        ax.imshow(noisy_images[k * 36], cmap="gray")
-        ax.axis("off")
-    plt.tight_layout()
-    plt.savefig("images/rotated_images_{}.png".format(2**i))
+        norm_image = normalize_image(noisy_image)
+
+        hr_image = resize_mhd_save(norm_image, hr_folder_mhd, hr_size, j)
+        lr_image = resize_mhd_save(hr_image, lr_folder_mhd, lr_size, j)
+        sr_image = resize_mhd_save(lr_image, sr_folder_mhd, hr_size, j)
