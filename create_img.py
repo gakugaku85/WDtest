@@ -18,7 +18,7 @@ def save_image(image, filename):
     Image.fromarray(image.astype(np.uint8)).save("{}.png".format(filename))
 
 
-def save_image_mhd(image, filename):
+def save_mhd(image, filename):
     sitk.WriteImage(sitk.GetImageFromArray(image), "{}.mhd".format(filename))
 
 
@@ -118,17 +118,22 @@ lr_size = (16, 16)
 line_space = 3
 
 for i in range(5, 8):
-    # os.makedirs("images/noisy_rotated_{}_mhd_{}".format(2**i, line_space), exist_ok=True)
+    original_mhd_path = "images/original"
     img_sigma_path = "images/sigma{}".format(2**i)
+    original_mhd_val1_path = "images/original_val1"
+    original_mhd_val2_path = "images/original_val2"
     hr_folder_mhd = img_sigma_path + "/hr_64"
     lr_folder_mhd = img_sigma_path + "/lr_16"
-    sr_folder_mhd = img_sigma_path + "/sr_64"
-    hr_folder_mhd_val1 = img_sigma_path + "val1/hr_64"
-    lr_folder_mhd_val1 = img_sigma_path + "val1/lr_16"
-    sr_folder_mhd_val1 = img_sigma_path + "val1/sr_64"
-    hr_folder_mhd_val2 = img_sigma_path + "val2/hr_64"
-    lr_folder_mhd_val2 = img_sigma_path + "val2/lr_16"
-    sr_folder_mhd_val2 = img_sigma_path + "val2/sr_64"
+    sr_folder_mhd = img_sigma_path + "/sr_16_64"
+    hr_folder_mhd_val1 = img_sigma_path + "_val1/hr_64"
+    lr_folder_mhd_val1 = img_sigma_path + "_val1/lr_16"
+    sr_folder_mhd_val1 = img_sigma_path + "_val1/sr_16_64"
+    hr_folder_mhd_val2 = img_sigma_path + "_val2/hr_64"
+    lr_folder_mhd_val2 = img_sigma_path + "_val2/lr_16"
+    sr_folder_mhd_val2 = img_sigma_path + "_val2/sr_16_64"
+    os.makedirs(original_mhd_path, exist_ok=True)
+    os.makedirs(original_mhd_val1_path, exist_ok=True)
+    os.makedirs(original_mhd_val2_path, exist_ok=True)
     os.makedirs(hr_folder_mhd, exist_ok=True)
     os.makedirs(lr_folder_mhd, exist_ok=True)
     os.makedirs(sr_folder_mhd, exist_ok=True)
@@ -148,14 +153,17 @@ for i in range(5, 8):
 
         if j % 3 == 0:
             if j % 6 == 0:
+                save_mhd(rotated_image, original_mhd_val1_path + "/{}".format(j))
                 hr_image = resize_mhd_save(norm_image, hr_folder_mhd_val1, hr_size, j)
                 lr_image = resize_mhd_save(hr_image, lr_folder_mhd_val1, lr_size, j)
                 sr_image = resize_mhd_save(lr_image, sr_folder_mhd_val1, hr_size, j)
             else:
+                save_mhd(rotated_image, original_mhd_val2_path + "/{}".format(j))
                 hr_image = resize_mhd_save(norm_image, hr_folder_mhd_val2, hr_size, j)
                 lr_image = resize_mhd_save(hr_image, lr_folder_mhd_val2, lr_size, j)
                 sr_image = resize_mhd_save(lr_image, sr_folder_mhd_val2, hr_size, j)
         else:
+            save_mhd(rotated_image, original_mhd_path + "/{}".format(j))
             hr_image = resize_mhd_save(norm_image, hr_folder_mhd, hr_size, j)
             lr_image = resize_mhd_save(hr_image, lr_folder_mhd, lr_size, j)
             sr_image = resize_mhd_save(lr_image, sr_folder_mhd, hr_size, j)
