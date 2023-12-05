@@ -86,7 +86,6 @@ def rotate_image(image, angle):
 
 
 def resize_mhd_save(image_array, output_path, target_size, j):
-    os.makedirs(output_path, exist_ok=True)
     resized_mhd = cv2.resize(image_array, target_size, interpolation=cv2.INTER_CUBIC)
     resample_mhd_image = sitk.GetImageFromArray(resized_mhd)
     sitk.WriteImage(resample_mhd_image, output_path + "/{}.mhd".format(j))
@@ -113,26 +112,50 @@ os.makedirs("images", exist_ok=True)
 
 image = np.zeros((100, 100)) + 64
 center_line = image.shape[0] // 2
-image[center_line - 1 : center_line + 1, :] = 192
+image[center_line - 1 : center_line + 2, :] = 192
 hr_size = (64, 64)
 lr_size = (16, 16)
-line_space = 2
+line_space = 3
 
-for i in range(5, 6):
-    os.makedirs("images/noisy_rotated_{}_mhd_{}".format(2**i, line_space), exist_ok=True)
-    hr_folder = "images/sigma{}_{}/hr_64".format(2**i, line_space)
-    hr_folder_mhd = hr_folder + "_mhd"
-    lr_folder = "images/sigma{}_{}/lr_16".format(2**i, line_space)
-    lr_folder_mhd = lr_folder + "_mhd"
-    sr_folder = "images/sigma{}_{}/sr_16_64".format(2**i, line_space)
-    sr_folder_mhd = sr_folder + "_mhd"
+for i in range(5, 8):
+    # os.makedirs("images/noisy_rotated_{}_mhd_{}".format(2**i, line_space), exist_ok=True)
+    img_sigma_path = "images/sigma{}".format(2**i)
+    hr_folder_mhd = img_sigma_path + "/hr_64"
+    lr_folder_mhd = img_sigma_path + "/lr_16"
+    sr_folder_mhd = img_sigma_path + "/sr_64"
+    hr_folder_mhd_val1 = img_sigma_path + "val1/hr_64"
+    lr_folder_mhd_val1 = img_sigma_path + "val1/lr_16"
+    sr_folder_mhd_val1 = img_sigma_path + "val1/sr_64"
+    hr_folder_mhd_val2 = img_sigma_path + "val2/hr_64"
+    lr_folder_mhd_val2 = img_sigma_path + "val2/lr_16"
+    sr_folder_mhd_val2 = img_sigma_path + "val2/sr_64"
+    os.makedirs(hr_folder_mhd, exist_ok=True)
+    os.makedirs(lr_folder_mhd, exist_ok=True)
+    os.makedirs(sr_folder_mhd, exist_ok=True)
+    os.makedirs(hr_folder_mhd_val1, exist_ok=True)
+    os.makedirs(lr_folder_mhd_val1, exist_ok=True)
+    os.makedirs(sr_folder_mhd_val1, exist_ok=True)
+    os.makedirs(hr_folder_mhd_val2, exist_ok=True)
+    os.makedirs(lr_folder_mhd_val2, exist_ok=True)
+    os.makedirs(sr_folder_mhd_val2, exist_ok=True)
+
     noisy_images = []
-    for j in tqdm(range(0, 180), desc="Creating images"):
+    for j in tqdm(range(0, 180), desc="{}sigma Creating images".format(2**i)):
         rotated_image = rotate_image(image, j)
         noisy_image = create_noisy_image(rotated_image, 1, 2**i)
 
         norm_image = normalize_image(noisy_image)
 
-        hr_image = resize_mhd_save(norm_image, hr_folder_mhd, hr_size, j)
-        lr_image = resize_mhd_save(hr_image, lr_folder_mhd, lr_size, j)
-        sr_image = resize_mhd_save(lr_image, sr_folder_mhd, hr_size, j)
+        if j % 3 == 0:
+            if j % 6 == 0:
+                hr_image = resize_mhd_save(norm_image, hr_folder_mhd_val1, hr_size, j)
+                lr_image = resize_mhd_save(hr_image, lr_folder_mhd_val1, lr_size, j)
+                sr_image = resize_mhd_save(lr_image, sr_folder_mhd_val1, hr_size, j)
+            else:
+                hr_image = resize_mhd_save(norm_image, hr_folder_mhd_val2, hr_size, j)
+                lr_image = resize_mhd_save(hr_image, lr_folder_mhd_val2, lr_size, j)
+                sr_image = resize_mhd_save(lr_image, sr_folder_mhd_val2, hr_size, j)
+        else:
+            hr_image = resize_mhd_save(norm_image, hr_folder_mhd, hr_size, j)
+            lr_image = resize_mhd_save(hr_image, lr_folder_mhd, lr_size, j)
+            sr_image = resize_mhd_save(lr_image, sr_folder_mhd, hr_size, j)
