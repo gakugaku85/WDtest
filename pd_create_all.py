@@ -9,9 +9,40 @@ from natsort import natsorted
 from skimage.color import label2rgb
 import pandas as pd
 import gudhi as gd
+import imageio
+from PIL import ImageDraw
+from PIL import Image
 
 
-def create_persistent_diagram(ori_image_data, fname, dir_path, sigma):
+def make_mp4(image, fname, dir_path):
+    print(dir_path, fname)
+
+    output_dir = dir_path + "/mp4/"
+    os.makedirs(output_dir, exist_ok=True)
+
+    frames = []
+    for threshold in range(256):
+        image[image <= threshold] = 0
+        frames.append(Image.fromarray(image))
+    # 各フレームに閾値をテキストとして追加
+    frames_with_text = []
+
+    for i, frame in reversed(list(enumerate(frames))):
+        img_copy = frame.copy()
+        draw = ImageDraw.Draw(img_copy)
+        text = f"{255-i}"
+        draw.text((3, 3), text, fill=255)
+        frames_with_text.append(img_copy)
+
+    # 画像リストをMP4に変換
+    mp4_with_text_output_path = os.path.join(
+        output_dir, fname.split(".")[0] + ".mp4"
+    )
+    with imageio.get_writer(mp4_with_text_output_path, mode="I", fps=10) as writer:
+        for frame in frames_with_text:
+            writer.append_data(np.array(frame))
+
+def create_persistent_diagram(ori_image_data, fname, dir_path):
 
     image_list = ["LR", "SR", "HR"]
     # Create output directory
@@ -72,7 +103,8 @@ def main(path, sigma):
                 if fname.endswith(".mhd"):
                     mhd_file_path = os.path.join(dir_path, fname)
                     original_image = sitk.GetArrayFromImage(sitk.ReadImage(mhd_file_path))
-                    create_persistent_diagram(original_image, fname, dir_path, sigma)
+                    create_persistent_diagram(original_image, fname, dir_path)
+                    make_mp4(original_image, fname, dir_path)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
