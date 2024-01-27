@@ -32,6 +32,7 @@ def make_mp4(image, fname, dir_path):
         text = f"{255-i}"
         draw.text((3, 3), text, fill=255)
         frames_with_text.append(img_copy)
+
     mp4_with_text_output_path = os.path.join(
         output_dir, fname.split(".")[0] + ".mp4"
     )
@@ -61,7 +62,8 @@ def create_persistent_diagram(image, fname, dir_path):
     plt.clf()
     gd.plot_persistence_diagram(persistence)
     plt.title("PD" + output_file_name)
-    # Create output file path
+    plt.xlim(-3, 260)
+    plt.ylim(0, 260)
     output_file_path = output_dir + output_file_name + ".png"
     print(output_file_path)
     plt.savefig(output_file_path)
