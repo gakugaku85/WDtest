@@ -1,17 +1,17 @@
-import numpy as np
-from skimage import measure
-import SimpleITK as sitk
-import os
-import matplotlib.pyplot as plt
 import argparse
+import os
+
 import cv2
-from natsort import natsorted
-from skimage.color import label2rgb
-import pandas as pd
 import gudhi as gd
 import imageio
-from PIL import ImageDraw
-from PIL import Image
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import SimpleITK as sitk
+from natsort import natsorted
+from PIL import Image, ImageDraw
+from skimage import measure
+from skimage.color import label2rgb
 
 
 def make_mp4(image, fname, dir_path):
@@ -52,45 +52,42 @@ def save_persistent_diagram(persistence, output_dir, output_file_name):
     plt.xlim(-3, 260)
     plt.ylim(0, 260)
     output_file_path = output_dir + output_file_name + ".png"
-    print(output_file_path)
     plt.savefig(output_file_path)
     return output_file_path
 
 def homologize_persistence(image_data, persistence, output_dir, output_file_name):
     os.makedirs(output_dir+"/point/", exist_ok=True)
-    half_thre_bin_image = image_data.copy()
-    death_before_image = image_data.copy()
     for i, (betch, (birth, death)) in enumerate(persistence):
         if betch == 0:#連結成分のみ
-            if death - birth < 15:
+            if death - birth < 30:
                 continue
             #deathの半分で二値化
             print("birth:", birth, "death:", death)
             save_persistent_diagram([(betch, (birth, death))], output_dir+"/point/", output_file_name+str(i))
             threshold = death // 2
-            half_thre_bin_image = binary_threshold(half_thre_bin_image, threshold)
-            cv2.imwrite(output_dir+"/point/"+output_file_name+str(i)+"_point.png", half_thre_bin_image*255)
+            thre_bin_image = binary_threshold(image_data, threshold)
+            cv2.imwrite(output_dir+"/point/"+output_file_name+str(i)+"_point.png", thre_bin_image*255)
 
             #deathの半分で二値化したものを元に、ラベリング
-            label = measure.label(half_thre_bin_image, connectivity=2)
+            label = measure.label(thre_bin_image, connectivity=2)
+            print("label:", label.max(), label.min())
 
             #ラベリングしたものを元に、ラベルごとに色を付ける
-            image_label_overlay = label2rgb(label, image=half_thre_bin_image)
-            cv2.imwrite(output_dir+"/point/"+output_file_name+str(i)+"_point_overlay.png", image_label_overlay*255)
+            image_label_overlay = label2rgb(label, image=thre_bin_image)
+            cv2.imwrite(output_dir+"/point/"+output_file_name+str(i)+"_point_color.png", image_label_overlay*255)
 
             #deathの直前の閾値で二値化
             threshold = death - 1
-            death_before_image[death_before_image <= threshold] = 0
-            death_before_image[death_before_image > threshold] = 1
-            death_before_image = death_before_image.astype(np.uint8)
+            death_before_image = binary_threshold(image_data, threshold)
             cv2.imwrite(output_dir+"/point/"+output_file_name+str(i)+"_death_before.png", death_before_image*255)
 
             #deathの直前の閾値で二値化した画像の255の部分をhalf_thre_bin_imageから取り出す
-            death_before_image = np.array(death_before_image)
-            half_thre_bin_image = np.array(half_thre_bin_image)
-            death_before_image = death_before_image.astype(np.uint8)
-            death_before_image = death_before_image * half_thre_bin_image
-            cv2.imwrite(output_dir+"/point/"+output_file_name+str(i)+"_death_before_point.png", death_before_image*255)
+            mix_labeled_image = label * death_before_image
+            labels = np.unique(mix_labeled_image)[1:]
+            label_image = np.zeros_like(thre_bin_image)
+            for lab in labels:
+                label_image[label == lab] = lab
+            cv2.imwrite(output_dir+"/point/"+output_file_name+str(i)+"_death_before_res.png", label_image*255)
 
 
 def create_persistent_diagram(ori_image_data, fname, dir_path):
@@ -127,7 +124,6 @@ def create_persistent_diagram(ori_image_data, fname, dir_path):
 
 
 def main(path):
-
     result_path = "../SR3/SR3_wdTest/experiments/"
     result_path = result_path + path
     result_path = result_path + "/results/"
@@ -144,6 +140,6 @@ def main(path):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-p", "--path", type=str, help="path to result folder")
+    parser.add_argument("-p", "--path", type=str, help="path to result folder", default="wdtest_16_64_231209_095537")
     args = parser.parse_args()
     main(args.path)
