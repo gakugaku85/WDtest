@@ -178,3 +178,11 @@ pyrightconfig.json
 data/*
 result/*
 images/*
+images_1/*
+TopologyLayer/*
+Topological-VAE/*
+torchph/*
+torchph
+TopologyLayer_gaku/*
+gudhi*
+pytorch-topological/
