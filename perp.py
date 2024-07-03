@@ -14,23 +14,28 @@ image = np.array([
     [0, 7, 7, 2, 2, 5, 5, 0],
     [0, 7, 7, 2, 2, 5, 5, 0],
     [0, 0, 0, 0, 0, 0, 0, 0]
-], dtype=np.uint8)
+], dtype=np.float32)
+image = image / 10
+
+plt.imshow(image, cmap='gray')
+plt.axis('off')
+plt.savefig('image.png')
 
 # グラフの作成
 graph = hg.get_4_adjacency_graph(image.shape)
 
 # Max-treeの構築
-tree, altitudes = hg.component_tree_min_tree(graph, image.flatten())
+tree, altitudes = hg.component_tree_max_tree(graph, image)
 
 # 閾値のリストを作成 (画像の画素値ごと)
-thresholds = np.unique(image)
+thresholds = np.unique(image)[1:]
 
 # 閾値ごとに画像を表示
-fig, axes = plt.subplots(1, 5, figsize=(20, 5))
+fig, axes = plt.subplots(1, 4, figsize=(20, 7))
 axes = axes.ravel()
 
-for i, threshold in enumerate(thresholds):  # 最初の10個の閾値のみ表示
-    filtered = hg.reconstruct_leaf_data(tree, altitudes > threshold)
+for i, threshold in enumerate(thresholds):
+    filtered = hg.reconstruct_leaf_data(tree, altitudes >= threshold)
     filtered = filtered.reshape(image.shape)
 
     axes[i].imshow(filtered, cmap='gray')
@@ -40,22 +45,30 @@ for i, threshold in enumerate(thresholds):  # 最初の10個の閾値のみ表�
 plt.tight_layout()
 plt.savefig('thresholds.png')
 
+print("root", tree.root())
+print("num_leaves", tree.num_leaves())
+
+# 葉ノードのみのタプルを取得
+leaves = tree.leaves()
+print("leaves", leaves)
+
 # Max-treeの視覚化（葉ノードを除外）
 def plot_hierarchical_max_tree(tree, altitudes):
     G = nx.DiGraph()
     leaves = set(tree.leaves())
     for i in range(tree.num_vertices()):
+        print(i, altitudes[i], tree.parent(i), tree.children(i))
         if i not in leaves:
             G.add_node(i, altitude=altitudes[i])
             parent = tree.parent(i)
             if parent != i and parent not in leaves:
-                G.add_edge(i, parent)  # エッジの方向を逆にする
+                G.add_edge(i, parent)
 
     # 階層的レイアウトを使用
     pos = nx.spring_layout(G, k=0.5, iterations=50)
 
     plt.figure(figsize=(12, 8))
-    nx.draw(G, pos, node_size=100, node_color='lightblue', with_labels=False,
+    nx.draw(G, pos, node_size=600, node_color='lightblue', with_labels=False,
             arrows=True, arrowsize=20, edge_color='gray')
 
     # ノードのラベルを表示
