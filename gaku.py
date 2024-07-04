@@ -2,52 +2,62 @@ import higra as hg
 import numpy as np
 import matplotlib.pyplot as plt
 
+def find_max_altitude_leaf(tree, altitudes, node):
+    if tree.num_children(node) == 0:  # 葉ノード
+        return node, altitudes[node]
+
+    children = list(tree.children(node))
+    max_leaf = None
+    max_altitude = float('-inf')
+
+    for child in children:
+        leaf, altitude = find_max_altitude_leaf(tree, altitudes, child)
+        if altitude > max_altitude:
+            max_leaf = leaf
+            max_altitude = altitude
+
+    return max_leaf, max_altitude
+
 def create_persistent_barcode(tree, altitudes):
     n_vertices = tree.num_vertices()
     barcode = []
-    active_components = {}  # key: node, value: (birth_altitude, node)
+    active_components = {}  # key: node, value: birth_altitude
 
-    # ノードをaltitudeの昇順にソート (葉ノードからルートノードに向かって処理)
-    leaves = set(tree.leaves())
-    print("n_vertices", range(n_vertices))
+    # ノードをaltitudeの降順にソート (ルートノードから葉ノードに向かって処理)
     sorted_nodes = sorted(range(n_vertices), key=lambda x: altitudes[x], reverse=True)
-    print("sorted_nodes", sorted_nodes)
 
     for node in sorted_nodes:
         current_altitude = altitudes[node]
-        parent = tree.parent(node)
+        children = list(tree.children(node))
 
-        if tree.num_children(node) == 0:  # 葉ノード
-            active_components[node] = (current_altitude, node)
+        if not children:  # 葉ノード
+            active_components[node] = current_altitude
         else:  # 内部ノード
-            children = list(tree.children(node))
+            child_components = [active_components[child] for child in children if child in active_components]
 
-            if len(children) > 1:
-                # 子ノードの中で最も高いaltitudeを持つものを見つける
-                max_child = max(children, key=lambda x: altitudes[x] if x in active_components else -1)
+            if child_components:
+                # 子ノードの中で最も高いaltitudeを持つ葉ノードを見つける
+                max_child, _ = max((find_max_altitude_leaf(tree, altitudes, child) for child in children), key=lambda x: x[1])
 
                 for child in children:
                     if child in active_components:
-                        birth_altitude, birth_node = active_components[child]
-                        if child != max_child:
-                            # 最大の子以外の成分は消滅
-                            barcode.append((birth_altitude, current_altitude))
+                        birth_altitude = active_components[child]
+                        leaf, _ = find_max_altitude_leaf(tree, altitudes, child)
+                        if leaf != max_child:
+                            # 最大のaltitudeを持つ葉ノード以外の成分は消滅
+                            barcode.append((1.0-birth_altitude, 1.0-current_altitude))
                         else:
-                            # 最大の子の成分は継続
-                            active_components[node] = (birth_altitude, birth_node)
+                            # 最大のaltitudeを持つ葉ノードの成分は継続
+                            active_components[node] = birth_altitude
                         del active_components[child]
             else:
-                # 子ノードが1つの場合、その成分を継続
-                child = children[0]
-                if child in active_components:
-                    active_components[node] = active_components[child]
-                    del active_components[child]
+                # 新しい連結成分が生まれる場合
+                active_components[node] = current_altitude
 
     # ルートノードの処理
     root = tree.root()
     if root in active_components:
-        birth_altitude, _ = active_components[root]
-        barcode.append((birth_altitude, 1.0))
+        barcode.append((1.0-active_components[root], 1.0))
 
     return barcode
 
@@ -81,10 +91,6 @@ new_tree, node_map = hg.simplify_tree(tree, deleted_vertices, process_leaves=Tru
 
 new_altitudes = altitudes[node_map]
 
-# new_altitudes = np.maximum.accumulate(altitudes[node_map])
-
-
-
 print("Original tree:", tree.parents())
 print("newtree_leaf", set(new_tree.leaves()))
 print("New tree:", new_tree.parents())
@@ -114,6 +120,8 @@ plot_tree(new_tree, new_altitudes, ax)
 ax.set_title('Simplified Tree')
 ax.set_xlabel('Node Index')
 ax.set_ylabel('Altitude')
+# y軸のrangeを1から0に変更
+ax.set_ylim(1, 0)
 ax.grid(True)
 
 # 画像として保存
@@ -126,7 +134,7 @@ barcode = create_persistent_barcode(new_tree, new_altitudes)
 fig, ax = plt.subplots(figsize=(10, 6))
 
 # バーを長さ順にソート
-sorted_barcode = sorted(barcode, key=lambda x: x[1] - x[0], reverse=True)
+sorted_barcode = sorted(barcode, key=lambda x: x[1] - x[0])
 
 for i, (birth, death) in enumerate(sorted_barcode):
     if birth != death:
@@ -135,7 +143,7 @@ for i, (birth, death) in enumerate(sorted_barcode):
 for i, (birth, death) in enumerate(sorted_barcode):
     ax.barh(i, death - birth, left=birth, height=0.6, color='blue', alpha=0.6)
 
-ax.set_xlabel('Threshold')
+ax.set_xlabel('1 - Threshold')
 ax.set_title('Persistent Barcode')
 ax.set_ylim(-1, len(barcode))
 ax.set_xlim(0, 1)
