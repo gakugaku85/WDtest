@@ -1,6 +1,7 @@
 import higra as hg
 import numpy as np
 import matplotlib.pyplot as plt
+import SimpleITK as sitk
 
 def find_max_altitude_leaf(tree, altitudes, node):
     if tree.num_children(node) == 0:  # 葉ノード
@@ -106,16 +107,21 @@ def create_min_persistent_barcode(tree, altitudes):
 
 # サンプル画像の定義と正規化
 
-image = np.array([
-    [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
-    [0.1, 0.5, 0.5, 0.3, 0.3, 0.7, 0.7, 0.1],
-    [0.1, 0.5, 0.1, 0.3, 0.3, 0.7, 0.7, 0.1],
-    [0.1, 0.5, 0.5, 0.3, 0.3, 0.7, 0.1, 0.1],
-    [0.1, 0.3, 0.3, 0.3, 0.3, 0.7, 0.7, 0.1],
-    [0.1, 0.9, 0.9, 0.3, 0.3, 0.7, 0.7, 0.1],
-    [0.1, 0.9, 0.1, 0.3, 0.3, 0.1, 0.1, 0.1],
-    [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
-])
+image = sitk.GetArrayFromImage(sitk.ReadImage("1.mhd"))
+image = (image - image.min()) / (image.max() - image.min())
+
+# image = image = np.array([
+#     [0, 0, 0, 0, 0, 0, 0, 0],
+#     [0, 5, 5, 1, 1, 1, 1, 0],
+#     [0, 5, 5, 1, 1, 1, 1, 0],
+#     [0, 1, 1, 0, 0, 5, 5, 0],
+#     [0, 1, 1, 0, 0, 5, 5, 0],
+#     [0, 7, 7, 2, 2, 5, 5, 0],
+#     [0, 7, 7, 2, 2, 5, 5, 0],
+#     [0, 0, 0, 0, 0, 0, 0, 0]
+# ], dtype=np.float32)
+# image = image / 10
+
 plt.imshow(image, cmap='gray')
 plt.axis('off')
 plt.savefig('image.png')
@@ -126,7 +132,7 @@ graph = hg.get_4_adjacency_graph(image.shape)
 # Max-treeの構築
 max_tree, max_altitudes = hg.component_tree_max_tree(graph, image.flatten())
 
-print("num_parents", len(max_tree.parents()))
+# print("num_parents", len(max_tree.parents()))
 # 閾値のリストを作成 (画像の画素値ごと)
 thresholds = np.unique(image)[1:]
 
@@ -148,7 +154,7 @@ plt.savefig('max_thresholds.png')
 # Min-treeの構築
 min_tree, min_altitudes = hg.component_tree_min_tree(graph, image.flatten())
 
-print("num_parents", len(min_tree.parents()))
+# print("num_parents", len(min_tree.parents()))
 
 thresholds = np.unique(image)[1:]
 
@@ -184,7 +190,6 @@ i=0
 for birth, death in sorted_min_barcode:
     if birth != death:
         i+=1
-        print(i, birth, death)
         ax.barh(i, death - birth, left=birth, height=0.6, color='red', alpha=0.6 ,label='Max-tree' if i == 0 else "")
 
 j=0
@@ -209,8 +214,21 @@ plt.tight_layout()
 plt.savefig('combined_barcode.png')
 
 # 連結成分の数を表示
-print(f"Number of connected components (Max-tree): {len(max_barcode)}")
-print("Max-tree Barcode: ", max_barcode)
+print("tree:cc_num", j, "hole num", i)
 
-print(f"Number of connected components (Min-tree): {len(min_barcode)}")
-print("Min-tree Barcode: ", min_barcode)
+
+import gudhi as gd
+
+cc = gd.CubicalComplex(
+        dimensions=image.shape, top_dimensional_cells=1-image.flatten()
+    )
+persistence = cc.persistence()
+cc_num = 0
+hole_num = 0
+for idx, (birth, death) in persistence:
+    if idx == 0:
+        cc_num += 1
+    else:
+        hole_num += 1
+print("gudhi:cc_num", cc_num, "hole num", hole_num)
+
