@@ -69,8 +69,8 @@ def create_persistent_barcode(tree, altitudes):
 
     return barcode
 
-image = sitk.GetArrayFromImage(sitk.ReadImage("1.mhd"))
-image = (image - image.min()) / (image.max() - image.min())
+# image = sitk.GetArrayFromImage(sitk.ReadImage("1.mhd"))
+# image = (image - image.min()) / (image.max() - image.min())
 # image = np.array([
 #     [0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3],
 #     [0.3, 0.7, 0.7, 0.5, 0.5, 0.6, 0.6, 0.3],
@@ -81,6 +81,19 @@ image = (image - image.min()) / (image.max() - image.min())
 #     [0.3, 0.9, 0.7, 0.7, 0.7, 0.6, 0.6, 0.3],
 #     [0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]
 # ])
+
+image = image = np.array([
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 5, 5, 1, 1, 1, 1, 0],
+    [0, 5, 5, 1, 1, 1, 1, 0],
+    [0, 1, 1, 0, 0, 5, 5, 0],
+    [0, 1, 1, 0, 0, 5, 5, 0],
+    [0, 7, 7, 2, 2, 5, 5, 0],
+    [0, 7, 7, 2, 2, 5, 5, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0]
+], dtype=np.float32)
+image = image / 10
+
 plt.imshow(image, cmap='gray')
 plt.axis('off')
 plt.savefig('image.png')
