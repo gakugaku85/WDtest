@@ -163,16 +163,14 @@ for idx, (birth, death) in persistence:
     else:
         hole_num += 1
 
-print("max min tree :cc_num", cc_num, "hole num", hole_num)
-end_time = time.time()
-
-print("time", end_time - start_time)
-
 gd.plot_persistence_barcode(persistence)
 plt.xlim(0, 1)
 plt.title('Persistent Barcode (Max-tree and Min-tree)')
 plt.savefig('combined_barcode.png')
 
+end_time = time.time()
+print("time", end_time - start_time)
+print("max min tree :cc_num", cc_num, "hole num", hole_num)
 
 gudhi_time = time.time()
 cc = gd.CubicalComplex(
@@ -180,11 +178,9 @@ cc = gd.CubicalComplex(
     )
 persistence = cc.persistence()
 
-gudhi_end_time = time.time()
-print("gudhi time", gudhi_end_time - gudhi_time)
-
 gd.plot_persistence_barcode(persistence)
 plt.xlim(0, 1)
+plt.title('Persistent Barcode (gudhi Cubical Complex)')
 plt.savefig('gudhi_barcode.png')
 cc_num = 0
 hole_num = 0
@@ -193,5 +189,8 @@ for idx, (birth, death) in persistence:
         cc_num += 1
     else:
         hole_num += 1
+
+gudhi_end_time = time.time()
+print("gudhi time", gudhi_end_time - gudhi_time)
 print("gudhi:cc_num", cc_num, "hole num", hole_num)
 
