@@ -186,3 +186,5 @@ torchph
 TopologyLayer_gaku/*
 gudhi*
 pytorch-topological/
+*.mhd
+*.raw

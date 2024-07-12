@@ -91,7 +91,7 @@ def create_min_persistent_barcode(tree, altitudes):
                         leaf, _ = find_max_altitude_leaf(tree, altitudes, child)
                         if leaf != min_child:
                             # 最小のaltitudeを持つ葉ノード以外の成分は消滅
-                            barcode.append((1.0 - birth_altitude, 1.0 - current_altitude))
+                            barcode.append((1.0 - current_altitude, 1.0 - birth_altitude))
                         else:
                             # 最小のaltitudeを持つ葉ノードの成分は継続
                             active_components[node] = birth_altitude
@@ -130,11 +130,12 @@ plt.savefig('image.png')
 
 # グラフの作成
 start_time = time.time()
-graph = hg.get_4_adjacency_graph(image.shape)
+graph = hg.get_8_adjacency_graph(image.shape)
+min_graph = hg.get_4_adjacency_graph(image.shape)
 
 max_tree, max_altitudes = hg.component_tree_max_tree(graph, image.flatten())
 
-min_tree, min_altitudes = hg.component_tree_min_tree(graph, image.flatten())
+min_tree, min_altitudes = hg.component_tree_min_tree(min_graph, image.flatten())
 
 # Persistent barcodeの作成 (Max-tree)
 max_barcode = create_persistent_barcode(max_tree, max_altitudes)
