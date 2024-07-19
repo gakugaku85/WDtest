@@ -34,12 +34,12 @@ frangi_result = frangi(image)
 # Satoフィルターの適用
 sato_result = sato(image)
 
-hessian_result = hessian(org_image)
+hessian_result = hessian(image)
 meijering_result = meijering(image)
 
 # ライブラリのSoft Frangiフィルターの適用
 tensor_image = torch.tensor(org_image).unsqueeze(0).unsqueeze(0).float()
-soft_frangi_filter = SoftFrangiFilter2D(1, 7, [2,4,8], 0.5, 0.5, 'cpu')
+soft_frangi_filter = SoftFrangiFilter2D(channels=1, kernel_size=7, sigmas=range(1, 10, 2), beta=0.5, c=0.5, device='cpu')
 soft_frangi_response = soft_frangi_filter(tensor_image)
 np_image = soft_frangi_response.squeeze().detach().numpy()
 
@@ -60,7 +60,7 @@ diagrams = {
 }
 
 # 結果の表示
-fig, axes = plt.subplots(4, 3, figsize=(15, 20))
+fig, axes = plt.subplots(2, 3)
 
 # 画像の表示
 images = [org_image, frangi_result, sato_result, hessian_result, meijering_result, np_image]
@@ -72,30 +72,30 @@ for i, (img, title) in enumerate(zip(images, titles)):
     ax.set_title(title)
     ax.axis('off')
 
-# パーシステントダイアグラムの表示
-for i, (title, diagram) in enumerate(diagrams.items()):
-    ax = axes[i // 3 + 2, i % 3]
+# # パーシステントダイアグラムの表示
+# for i, (title, diagram) in enumerate(diagrams.items()):
+#     ax = axes[i // 3 + 2, i % 3]
 
-    # フィルタリングして無限大の値を除外
-    filtered_diagram = [(dim, (birth, death)) for dim, (birth, death) in diagram if not np.isinf(death)]
+#     # フィルタリングして無限大の値を除外
+#     filtered_diagram = [(dim, (birth, death)) for dim, (birth, death) in diagram if not np.isinf(death)]
 
-    # 点をプロット
-    for dim, (birth, death) in filtered_diagram:
-        if dim == 0:
-            ax.scatter(birth, death, c='red', s=10)
-        else:
-            ax.scatter(birth, death, c='blue', s=10)
+#     # 点をプロット
+#     for dim, (birth, death) in filtered_diagram:
+#         if dim == 0:
+#             ax.scatter(birth, death, c='red', s=10)
+#         else:
+#             ax.scatter(birth, death, c='blue', s=10)
 
-    # 対角線を描画
-    lims = [
-        np.min([ax.get_xlim(), ax.get_ylim()]),  # min of both axes
-        np.max([ax.get_xlim(), ax.get_ylim()]),  # max of both axes
-    ]
-    ax.plot(lims, lims, 'k-', alpha=0.3, zorder=0)
+#     # 対角線を描画
+#     lims = [
+#         np.min([ax.get_xlim(), ax.get_ylim()]),  # min of both axes
+#         np.max([ax.get_xlim(), ax.get_ylim()]),  # max of both axes
+#     ]
+#     ax.plot(lims, lims, 'k-', alpha=0.3, zorder=0)
 
-    ax.set_title(f'{title} Persistence Diagram')
-    ax.set_xlabel('Birth')
-    ax.set_ylabel('Death')
+#     ax.set_title(f'{title} Persistence Diagram')
+#     ax.set_xlabel('Birth')
+#     ax.set_ylabel('Death')
 
 plt.tight_layout()
 plt.savefig('filter_comp_with_persistence.png')
