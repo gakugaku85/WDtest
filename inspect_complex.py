@@ -4,9 +4,8 @@ import numpy as np
 # import SimpleITK as sitk
 import torch
 import cv2
-
 from torch import nn
-
+import SimpleITK as sitk
 import time
 from torch_topological.nn import CubicalComplex, WassersteinDistance
 
@@ -101,56 +100,108 @@ def plot_persistence_diagram_with_coordinates(ax, cofaces_output):
 #     [0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]
 # ])
 
-image_data = np.array(
-    [
-        [0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 1, 1, 1, 1, 1, 0.8, 0],
-        [0, 0.4, 0, 0, 0, 0, 0.4, 0],
-        [0, 1, 0, 0, 0, 0, 1, 0],
-        [0, 1, 0, 0, 0, 0, 1, 0],
-        [0, 1, 0, 0, 0, 0, 1, 0],
-        [0, 1, 1, 1, 1, 1, 1, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0],
-    ]
-)
+# image_data = np.array(
+#     [
+#         [0, 0, 0, 0, 0, 0, 0, 0],
+#         [0, 1, 1, 1, 1, 1, 0.8, 0],
+#         [0, 0.4, 0, 0, 0, 0, 0.4, 0],
+#         [0, 1, 0, 0, 0, 0, 1, 0],
+#         [0, 1, 0, 0, 0, 0, 1, 0],
+#         [0, 1, 0, 0, 0, 0, 1, 0],
+#         [0, 1, 1, 1, 1, 1, 1, 0],
+#         [0, 0, 0, 0, 0, 0, 0, 0],
+#     ]
+# )
 
-image_data_2 = np.array(
-    [
-        [0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 1, 1, 0.1, 0.1, 0.2, 0.2, 0],
-        [0, 1, 1, 0.1, 0.1, 0.2, 0.2, 0],
-        [0, 0.3, 0.3, 0, 0, 1, 1, 0],
-        [0, 0.3, 0.3, 0, 0, 1, 1, 0],
-        [0, 0.8, 0.8, 0.5, 0.5, 0.6, 0.6, 0],
-        [0, 0.8, 0.8, 0.5, 0.5, 0.6, 0.6, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0],
-    ]
-)
+# image_data_2 = np.array(
+#     [
+#         [0, 0, 0, 0, 0, 0, 0, 0],
+#         [0, 1, 1, 0.1, 0.1, 0.2, 0.2, 0],
+#         [0, 1, 1, 0.1, 0.1, 0.2, 0.2, 0],
+#         [0, 0.3, 0.3, 0, 0, 1, 1, 0],
+#         [0, 0.3, 0.3, 0, 0, 1, 1, 0],
+#         [0, 0.8, 0.8, 0.5, 0.5, 0.6, 0.6, 0],
+#         [0, 0.8, 0.8, 0.5, 0.5, 0.6, 0.6, 0],
+#         [0, 0, 0, 0, 0, 0, 0, 0],
+#     ]
+# )
 
-image_data_3 = np.array(
-    [
-        [0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 1, 1, 1, 1, 1, 0, 0],
-        [0, 1, 0, 0, 0, 0, 1, 0],
-        [0, 0.8, 0.3, 0.5, 0.5, 0, 1, 0],
-        [0, 1, 0, 0.5, 0.5, 0, 1, 0],
-        [0, 1, 0, 0, 0, 0, 1, 0],
-        [0, 1, 1, 1, 1, 1, 1, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0],
-    ]
-)
+# image_data_3 = np.array(
+#     [
+#         [0, 0, 0, 0, 0, 0, 0, 0],
+#         [0, 1, 1, 1, 1, 1, 0, 0],
+#         [0, 1, 0, 0, 0, 0, 1, 0],
+#         [0, 0.8, 0.3, 0.5, 0.5, 0, 1, 0],
+#         [0, 1, 0, 0.5, 0.5, 0, 1, 0],
+#         [0, 1, 0, 0, 0, 0, 1, 0],
+#         [0, 1, 1, 1, 1, 1, 1, 0],
+#         [0, 0, 0, 0, 0, 0, 0, 0],
+#     ]
+# )
 
-image_list = [image_data, image_data_2, image_data_3]
+image_list = []
+
+
+
+# image = sitk.GetArrayFromImage(sitk.ReadImage("200.mhd"))
+
+# for i in range(2):
+#     # ランダムな場所から64*64に切り取る
+#     x = np.random.randint(0, image.shape[0] - 64)
+#     y = np.random.randint(0, image.shape[1] - 64)
+
+#     while True:
+#         x = np.random.randint(0, image.shape[0] - 64)
+#         y = np.random.randint(0, image.shape[1] - 64)
+#         org_image = image[x:x+64, y:y+64]
+#         if (np.count_nonzero(org_image==0)/np.count_nonzero(org_image>=0) <= 0.6):#黒の割合
+#             break
+
+#     org_image = (org_image - org_image.min()) / (org_image.max() - org_image.min())
+#     image_list.append(org_image)
+
+image = sitk.GetArrayFromImage(sitk.ReadImage("img/1.mhd"))
+image = (image - image.min()) / (image.max() - image.min())
+image_list.append(image)
+image = sitk.GetArrayFromImage(sitk.ReadImage("img/40.mhd"))
+image = (image - image.min()) / (image.max() - image.min())
+image_list.append(image)
+image = sitk.GetArrayFromImage(sitk.ReadImage("img/100.mhd"))
+image = (image - image.min()) / (image.max() - image.min())
+image_list.append(image)
+
+# image_list = [image_data, image_data_2, image_data_3]
+
 # image_list = [image_data]
 
-plt.clf()
-fig, axs = plt.subplots(2, len(image_list), figsize=(5*len(image_list), 10))
+ori_image_list = []
+ori1_image = sitk.GetArrayFromImage(sitk.ReadImage("img/1_ori.mhd"))
+ori40_image = sitk.GetArrayFromImage(sitk.ReadImage("img/40_ori.mhd"))
+ori100_image = sitk.GetArrayFromImage(sitk.ReadImage("img/100_ori.mhd"))
+ori_image_list.append(ori1_image)
+ori_image_list.append(ori40_image)
+ori_image_list.append(ori100_image)
 
-for i, img in enumerate(image_list):
+# from soft_frangi.soft_frangi_filter2d import SoftFrangiFilter2D
+# soft_frangi_filter = SoftFrangiFilter2D(channels=1, kernel_size=7, sigmas=range(1, 10, 2), beta=0.5, c=0.5, device='cpu')
+from skimage.filters import frangi, sato
+
+
+plt.clf()
+fig, axs = plt.subplots(3, len(image_list), figsize=(7*len(image_list), 10))
+
+for i, (img, ori_img) in enumerate(zip(image_list, ori_image_list)):
     # 画像の表示
     axs[0, i].imshow(img, cmap='gray')
     axs[0, i].axis('off')
     axs[0, i].set_title("Image " + str(i))
+
+    # axs[2, i].imshow(ori_img, cmap='gray')
+    # axs[2, i].axis('off')
+    # axs[2, i].set_title("Ori Image " + str(i))
+
+    # ori_imgの192の画素の数をカウント
+    # print(f"ori_imgの192の画素の数: {np.count_nonzero(ori_img==192)}")
 
     # Persistent Homologyの計算
     cc = gd.CubicalComplex(
@@ -161,22 +212,47 @@ for i, img in enumerate(image_list):
 
     result = match_cofaces_with_gudhi(img, cofaces, persistence)
 
-    print(f"persistence for Image {i}:", persistence)
-    print(f"cofaces for Image {i}:", cofaces)
-    print(f"result for Image {i}:", result)
+    # print(f"persistence for Image {i}:", persistence)
+    # print(f"cofaces for Image {i}:", cofaces)
+    # print(f"result for Image {i}:", result)
 
     # Persistence Diagramの表示
     ax = axs[1, i]
+    ax.set_xlim(-0.1, 1.1)
+    ax.set_ylim(-0.1, 1.1)
+
+    bx = axs[0, i]
+
+    cx = axs[2, i]
+
     filtered_diagram = [(dim, (birth, 1 if np.isinf(death) else death)) for dim, (birth, death), _ in result]
 
+    frangi_img = frangi(1-img)
+    print("frangi max min",frangi_img.max(), frangi_img.min())
+    cx.imshow(frangi_img, cmap='gray')
+
+    img_scaled = (img * 255).astype(np.uint8)
+    img_rgb = cv2.cvtColor(img_scaled, cv2.COLOR_GRAY2RGB)
+    point_num = 0
     # 点をプロットし、座標情報を追加
     for (dim, (birth, death)), (_, _, coordinates) in zip(filtered_diagram, result):
         if dim == 0:
             color = 'red'
         else:
             color = 'blue'
+            continue
 
-        ax.scatter(birth, death, c=color, s=10)
+        # カラーマップを適用
+        # ori image の(coordinates[0][0], coordinates[0][1])の座標の画素値が192の場合点を描画
+        if frangi_img[coordinates[0][0], coordinates[0][1]] > 0.45:
+            if coordinates[1] is not None:
+                    img_rgb[coordinates[0][0], coordinates[0][1]] = [255, 0, 0]
+                    # img_rgb[coordinates[1][0], coordinates[1][1]] = [0, 0, 255]
+                    point_num += 1
+            ax.scatter(birth, death, c=color, s=10)
+        else:
+            continue
+        # ax.scatter(birth, death, c=color, s=10)
 
         # 座標情報のテキストを作成
         if coordinates[1] is None:
@@ -194,12 +270,28 @@ for i, img in enumerate(image_list):
     ]
     ax.plot(lims, lims, 'k-', alpha=0.3, zorder=0)
 
+    print(f"点の数: {point_num}")
+
     ax.set_title(f'Persistence Diagram {i}')
     ax.set_xlabel('Birth')
     ax.set_ylabel('Death')
 
+    bx.imshow(img_rgb)
+
 plt.tight_layout()
-plt.savefig("input_images_with_diagrams_and_coordinates.png")
+plt.savefig("images_with_diagrams_and_coordinates.png")
+
+# for i, img in enumerate(image_list):
+#     # gudhiでの表示を行う
+#     fig, axs = plt.subplots(1, 2, figsize=(10, 5))
+#     cc = gd.CubicalComplex(
+#         dimensions=img.shape, top_dimensional_cells=1.0-img.flatten()
+#     )
+#     persistence = cc.persistence()
+
+#     gd.plot_persistence_diagram(persistence)
+#     plt.title(f"Image {i} Persistence Diagram")
+#     plt.savefig(f"image_{i}_persistence_diagram.png")
 
 # print("gudhi:", persistences)
 
@@ -211,13 +303,12 @@ plt.savefig("input_images_with_diagrams_and_coordinates.png")
 
 # print("gudhi:", persistence)
 # print("cofaces:", cofaces)
-# plot_persistence_diagram(persistence, "cubical")
 
 combined_images = np.array(image_list)
 img_batch = torch.tensor(combined_images, device=device, dtype=torch.float32).unsqueeze(1)
 cubical = CubicalComplex()
 wd_loss = WassersteinDistance(q=2)
 per_cc = cubical(img_batch)
-print(per_cc)
+# print(per_cc)
 
 # loss = wd_loss(per_cc, per_cc)

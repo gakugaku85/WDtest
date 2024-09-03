@@ -9,27 +9,28 @@ import torch
 import gudhi as gd
 
 # サンプル画像の読み込み
-image = sitk.GetArrayFromImage(sitk.ReadImage("200.mhd"))
+image = sitk.GetArrayFromImage(sitk.ReadImage("40.mhd"))
 
 # ランダムな場所から64*64に切り取る
-x = np.random.randint(0, image.shape[0] - 64)
-y = np.random.randint(0, image.shape[1] - 64)
+# x = np.random.randint(0, image.shape[0] - 64)
+# y = np.random.randint(0, image.shape[1] - 64)
 
-while True:
-    x = np.random.randint(0, image.shape[0] - 64)
-    y = np.random.randint(0, image.shape[1] - 64)
-    org_image = image[x:x+64, y:y+64]
-    if (np.count_nonzero(org_image==0)/np.count_nonzero(org_image>=0) <= 0.6):#黒の割合
-        break
+# while True:
+#     x = np.random.randint(0, image.shape[0] - 64)
+#     y = np.random.randint(0, image.shape[1] - 64)
+#     org_image = image[x:x+64, y:y+64]
+#     if (np.count_nonzero(org_image==0)/np.count_nonzero(org_image>=0) <= 0.6):#黒の割合
+        # break
 
-org_image = (org_image - org_image.min()) / (org_image.max() - org_image.min())
-
+# org_image = (org_image - org_image.min()) / (org_image.max() - org_image.min())
+org_image = (image - image.min()) / (image.max() - image.min())
 print(org_image.max(), org_image.min())
 # 反転
 image = 1 - org_image
 
 # Frangiフィルターの適用
 frangi_result = frangi(image)
+print("frangi_result", frangi_result.max(), frangi_result.min())
 
 # Satoフィルターの適用
 sato_result = sato(image)
@@ -42,6 +43,7 @@ tensor_image = torch.tensor(org_image).unsqueeze(0).unsqueeze(0).float()
 soft_frangi_filter = SoftFrangiFilter2D(channels=1, kernel_size=7, sigmas=range(1, 10, 2), beta=0.5, c=0.5, device='cpu')
 soft_frangi_response = soft_frangi_filter(tensor_image)
 np_image = soft_frangi_response.squeeze().detach().numpy()
+print("soft_frangi_result", np_image.max(), np_image.min())
 
 # パーシステントダイアグラムの生成
 def compute_persistence_diagram(image):
