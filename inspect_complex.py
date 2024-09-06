@@ -89,90 +89,37 @@ def plot_persistence_diagram_with_coordinates(ax, cofaces_output):
     ax.set_title('Persistence Diagram with Coordinates')
     ax.set_xlabel('Birth')
     ax.set_ylabel('Death')
-# image = np.array([
-#     [0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3],
-#     [0.3, 0.7, 0.7, 0.5, 0.5, 0.6, 0.6, 0.3],
-#     [0.3, 0.7, 0.5, 0.5, 0.5, 0.6, 0.6, 0.3],
-#     [0.3, 0.7, 0.7, 0.5, 0.5, 0.6, 0.6, 0.3],
-#     [0.3, 0.5, 0.5, 0.5, 0.5, 0.6, 0.6, 0.3],
-#     [0.3, 0.9, 0.9, 0.7, 0.7, 0.6, 0.6, 0.3],
-#     [0.3, 0.9, 0.7, 0.7, 0.7, 0.6, 0.6, 0.3],
-#     [0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]
-# ])
-
-# image_data = np.array(
-#     [
-#         [0, 0, 0, 0, 0, 0, 0, 0],
-#         [0, 1, 1, 1, 1, 1, 0.8, 0],
-#         [0, 0.4, 0, 0, 0, 0, 0.4, 0],
-#         [0, 1, 0, 0, 0, 0, 1, 0],
-#         [0, 1, 0, 0, 0, 0, 1, 0],
-#         [0, 1, 0, 0, 0, 0, 1, 0],
-#         [0, 1, 1, 1, 1, 1, 1, 0],
-#         [0, 0, 0, 0, 0, 0, 0, 0],
-#     ]
-# )
-
-# image_data_2 = np.array(
-#     [
-#         [0, 0, 0, 0, 0, 0, 0, 0],
-#         [0, 1, 1, 0.1, 0.1, 0.2, 0.2, 0],
-#         [0, 1, 1, 0.1, 0.1, 0.2, 0.2, 0],
-#         [0, 0.3, 0.3, 0, 0, 1, 1, 0],
-#         [0, 0.3, 0.3, 0, 0, 1, 1, 0],
-#         [0, 0.8, 0.8, 0.5, 0.5, 0.6, 0.6, 0],
-#         [0, 0.8, 0.8, 0.5, 0.5, 0.6, 0.6, 0],
-#         [0, 0, 0, 0, 0, 0, 0, 0],
-#     ]
-# )
-
-# image_data_3 = np.array(
-#     [
-#         [0, 0, 0, 0, 0, 0, 0, 0],
-#         [0, 1, 1, 1, 1, 1, 0, 0],
-#         [0, 1, 0, 0, 0, 0, 1, 0],
-#         [0, 0.8, 0.3, 0.5, 0.5, 0, 1, 0],
-#         [0, 1, 0, 0.5, 0.5, 0, 1, 0],
-#         [0, 1, 0, 0, 0, 0, 1, 0],
-#         [0, 1, 1, 1, 1, 1, 1, 0],
-#         [0, 0, 0, 0, 0, 0, 0, 0],
-#     ]
-# )
 
 image_list = []
 
 
+np.random.seed(1)
+image = sitk.GetArrayFromImage(sitk.ReadImage("img/200.mhd"))
 
-# image = sitk.GetArrayFromImage(sitk.ReadImage("200.mhd"))
+for i in range(3):
+    # ランダムな場所から64*64に切り取る
+    x = np.random.randint(0, image.shape[0] - 64)
+    y = np.random.randint(0, image.shape[1] - 64)
 
-# for i in range(2):
-#     # ランダムな場所から64*64に切り取る
-#     x = np.random.randint(0, image.shape[0] - 64)
-#     y = np.random.randint(0, image.shape[1] - 64)
+    while True:
+        x = np.random.randint(0, image.shape[0] - 64)
+        y = np.random.randint(0, image.shape[1] - 64)
+        org_image = image[x:x+64, y:y+64]
+        if (np.count_nonzero(org_image==0)/np.count_nonzero(org_image>=0) <= 0.6):#黒の割合
+            break
 
-#     while True:
-#         x = np.random.randint(0, image.shape[0] - 64)
-#         y = np.random.randint(0, image.shape[1] - 64)
-#         org_image = image[x:x+64, y:y+64]
-#         if (np.count_nonzero(org_image==0)/np.count_nonzero(org_image>=0) <= 0.6):#黒の割合
-#             break
+    org_image = (org_image - org_image.min()) / (org_image.max() - org_image.min())
+    image_list.append(org_image)
 
-#     org_image = (org_image - org_image.min()) / (org_image.max() - org_image.min())
-#     image_list.append(org_image)
-
-image = sitk.GetArrayFromImage(sitk.ReadImage("img/1.mhd"))
-image = (image - image.min()) / (image.max() - image.min())
-image_list.append(image)
-image = sitk.GetArrayFromImage(sitk.ReadImage("img/40.mhd"))
-image = (image - image.min()) / (image.max() - image.min())
-image_list.append(image)
-image = sitk.GetArrayFromImage(sitk.ReadImage("img/100.mhd"))
-image = (image - image.min()) / (image.max() - image.min())
-image_list.append(image)
-
-# image_list = [image_data, image_data_2, image_data_3]
-
-# image_list = [image_data]
+# image = sitk.GetArrayFromImage(sitk.ReadImage("img/1.mhd"))
+# image = (image - image.min()) / (image.max() - image.min())
+# image_list.append(image)
+# image = sitk.GetArrayFromImage(sitk.ReadImage("img/40.mhd"))
+# image = (image - image.min()) / (image.max() - image.min())
+# image_list.append(image)
+# image = sitk.GetArrayFromImage(sitk.ReadImage("img/100.mhd"))
+# image = (image - image.min()) / (image.max() - image.min())
+# image_list.append(image)
 
 ori_image_list = []
 ori1_image = sitk.GetArrayFromImage(sitk.ReadImage("img/1_ori.mhd"))
@@ -192,9 +139,9 @@ fig, axs = plt.subplots(3, len(image_list), figsize=(7*len(image_list), 10))
 
 for i, (img, ori_img) in enumerate(zip(image_list, ori_image_list)):
     # 画像の表示
-    axs[0, i].imshow(img, cmap='gray')
-    axs[0, i].axis('off')
-    axs[0, i].set_title("Image " + str(i))
+    # axs[0, i].imshow(img, cmap='gray')
+    # axs[0, i].axis('off')
+    # axs[0, i].set_title("Image " + str(i))
 
     # axs[2, i].imshow(ori_img, cmap='gray')
     # axs[2, i].axis('off')
@@ -217,23 +164,27 @@ for i, (img, ori_img) in enumerate(zip(image_list, ori_image_list)):
     # print(f"result for Image {i}:", result)
 
     # Persistence Diagramの表示
-    ax = axs[1, i]
+    ax = axs[2, i]
     ax.set_xlim(-0.1, 1.1)
     ax.set_ylim(-0.1, 1.1)
 
-    bx = axs[0, i]
+    bx = axs[1, i]
+    bx.set_title('frangi vs Distance')
+    bx.set_xlabel('Distance')
+    bx.set_ylabel('frangi')
 
-    cx = axs[2, i]
+    # cx = axs[3, i]
 
     filtered_diagram = [(dim, (birth, 1 if np.isinf(death) else death)) for dim, (birth, death), _ in result]
 
     frangi_img = frangi(1-img)
     print("frangi max min",frangi_img.max(), frangi_img.min())
-    cx.imshow(frangi_img, cmap='gray')
+    # cx.imshow(frangi_img, cmap='gray')
 
     img_scaled = (img * 255).astype(np.uint8)
     img_rgb = cv2.cvtColor(img_scaled, cv2.COLOR_GRAY2RGB)
     point_num = 0
+    weight_thre = 0.02
     # 点をプロットし、座標情報を追加
     for (dim, (birth, death)), (_, _, coordinates) in zip(filtered_diagram, result):
         if dim == 0:
@@ -242,15 +193,22 @@ for i, (img, ori_img) in enumerate(zip(image_list, ori_image_list)):
             color = 'blue'
             continue
 
-        # カラーマップを適用
-        # ori image の(coordinates[0][0], coordinates[0][1])の座標の画素値が192の場合点を描画
-        if frangi_img[coordinates[0][0], coordinates[0][1]] > 0.45:
-            if coordinates[1] is not None:
-                    img_rgb[coordinates[0][0], coordinates[0][1]] = [255, 0, 0]
-                    # img_rgb[coordinates[1][0], coordinates[1][1]] = [0, 0, 255]
-                    point_num += 1
+        # birth, deathの点から対角線までの垂直に下した線のL1距離を計算
+        distance = np.abs(birth - death) / np.sqrt(2)
+        # print(f"distance: {distance}")
+        weight = distance * frangi_img[coordinates[0][0], coordinates[0][1]]
+        # print(f"weight: {weight}")
+
+        # x軸distance、y軸frangiのグラフを描画
+        if weight > weight_thre:
             ax.scatter(birth, death, c=color, s=10)
+            bx.scatter(distance, frangi_img[coordinates[0][0], coordinates[0][1]], c=color, s=10)
+            bx.annotate(f"({coordinates[0][0]}, {coordinates[0][1]})", (distance, frangi_img[coordinates[0][0], coordinates[0][1]]), xytext=(3, 3), textcoords='offset points', fontsize=8)
+            img_rgb[coordinates[0][0], coordinates[0][1]] = [255, 0, 0]
+            point_num += 1
         else:
+            ax.scatter(birth, death, c='green', s=10)
+            bx.scatter(distance, frangi_img[coordinates[0][0], coordinates[0][1]], c='green', s=10)
             continue
         # ax.scatter(birth, death, c=color, s=10)
 
@@ -261,7 +219,7 @@ for i, (img, ori_img) in enumerate(zip(image_list, ori_image_list)):
             coord_text = f"({coordinates[0][0]}, {coordinates[0][1]}) -> ({coordinates[1][0]}, {coordinates[1][1]})"
 
         # 点の横にテキストを追加
-        ax.annotate(coord_text, (birth, death), xytext=(5, 5), textcoords='offset points', fontsize=12)
+        ax.annotate(coord_text, (birth, death), xytext=(3, 3), textcoords='offset points', fontsize=8)
 
     # 対角線を描画
     lims = [
@@ -271,12 +229,20 @@ for i, (img, ori_img) in enumerate(zip(image_list, ori_image_list)):
     ax.plot(lims, lims, 'k-', alpha=0.3, zorder=0)
 
     print(f"点の数: {point_num}")
+    ax.annotate(f"weight threshold: {weight_thre}", (0.7, 0.6), xytext=(3, 3), textcoords='offset points', fontsize=12)
+    ax.annotate(f"select point num: {point_num}", (0.7, 0.5), xytext=(3, 3), textcoords='offset points', fontsize=12)
+    ax.annotate(f"all point num: {len(filtered_diagram)}", (0.7, 0.4), xytext=(3, 3), textcoords='offset points', fontsize=12)
 
     ax.set_title(f'Persistence Diagram {i}')
     ax.set_xlabel('Birth')
     ax.set_ylabel('Death')
 
-    bx.imshow(img_rgb)
+    frangi_img = (frangi_img * 255).astype(np.uint8)
+    frangi_img = cv2.cvtColor(frangi_img, cv2.COLOR_GRAY2RGB)
+    concat_img = np.concatenate([img_rgb, frangi_img], axis=1)
+    axs[0, i].imshow(concat_img)
+    axs[0, i].axis('off')
+    axs[0, i].set_title("Image " + str(i)+ "  left:original right:frangi")
 
 plt.tight_layout()
 plt.savefig("images_with_diagrams_and_coordinates.png")
