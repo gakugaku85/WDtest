@@ -188,3 +188,4 @@ gudhi*
 pytorch-topological/
 *.mhd
 *.raw
+img/*

@@ -93,7 +93,8 @@ def plot_persistence_diagram_with_coordinates(ax, cofaces_output):
 image_list = []
 
 
-np.random.seed(1)
+np.random.seed(2)
+weight_thre = [0.05, 0.04, 0.03, 0.02, 0.01, 0.005]
 image = sitk.GetArrayFromImage(sitk.ReadImage("img/200.mhd"))
 
 for i in range(3):
@@ -137,115 +138,117 @@ from skimage.filters import frangi, sato
 plt.clf()
 fig, axs = plt.subplots(3, len(image_list), figsize=(7*len(image_list), 10))
 
-for i, (img, ori_img) in enumerate(zip(image_list, ori_image_list)):
-    # 画像の表示
-    # axs[0, i].imshow(img, cmap='gray')
-    # axs[0, i].axis('off')
-    # axs[0, i].set_title("Image " + str(i))
+for k, weight_thre in enumerate(weight_thre):
+    fig, axs = plt.subplots(3, len(image_list), figsize=(7*len(image_list), 10))
 
-    # axs[2, i].imshow(ori_img, cmap='gray')
-    # axs[2, i].axis('off')
-    # axs[2, i].set_title("Ori Image " + str(i))
+    for i, (img, ori_img) in enumerate(zip(image_list, ori_image_list)):
+        # 画像の表示
+        # axs[0, i].imshow(img, cmap='gray')
+        # axs[0, i].axis('off')
+        # axs[0, i].set_title("Image " + str(i))
 
-    # ori_imgの192の画素の数をカウント
-    # print(f"ori_imgの192の画素の数: {np.count_nonzero(ori_img==192)}")
+        # axs[2, i].imshow(ori_img, cmap='gray')
+        # axs[2, i].axis('off')
+        # axs[2, i].set_title("Ori Image " + str(i))
 
-    # Persistent Homologyの計算
-    cc = gd.CubicalComplex(
-        dimensions=img.shape, top_dimensional_cells=1.0-img.flatten()
-    )
-    persistence = cc.persistence()
-    cofaces = cc.cofaces_of_persistence_pairs()
+        # ori_imgの192の画素の数をカウント
+        # print(f"ori_imgの192の画素の数: {np.count_nonzero(ori_img==192)}")
 
-    result = match_cofaces_with_gudhi(img, cofaces, persistence)
+        # Persistent Homologyの計算
+        cc = gd.CubicalComplex(
+            dimensions=img.shape, top_dimensional_cells=1.0-img.flatten()
+        )
+        persistence = cc.persistence()
+        cofaces = cc.cofaces_of_persistence_pairs()
 
-    # print(f"persistence for Image {i}:", persistence)
-    # print(f"cofaces for Image {i}:", cofaces)
-    # print(f"result for Image {i}:", result)
+        result = match_cofaces_with_gudhi(img, cofaces, persistence)
 
-    # Persistence Diagramの表示
-    ax = axs[2, i]
-    ax.set_xlim(-0.1, 1.1)
-    ax.set_ylim(-0.1, 1.1)
+        # print(f"persistence for Image {i}:", persistence)
+        # print(f"cofaces for Image {i}:", cofaces)
+        # print(f"result for Image {i}:", result)
 
-    bx = axs[1, i]
-    bx.set_title('frangi vs Distance')
-    bx.set_xlabel('Distance')
-    bx.set_ylabel('frangi')
+        # Persistence Diagramの表示
+        ax = axs[2, i]
+        ax.set_xlim(-0.1, 1.1)
+        ax.set_ylim(-0.1, 1.1)
 
-    # cx = axs[3, i]
+        bx = axs[1, i]
+        bx.set_title('frangi vs Distance')
+        bx.set_xlabel('Distance')
+        bx.set_ylabel('frangi')
 
-    filtered_diagram = [(dim, (birth, 1 if np.isinf(death) else death)) for dim, (birth, death), _ in result]
+        # cx = axs[3, i]
 
-    frangi_img = frangi(1-img)
-    print("frangi max min",frangi_img.max(), frangi_img.min())
-    # cx.imshow(frangi_img, cmap='gray')
+        filtered_diagram = [(dim, (birth, 1 if np.isinf(death) else death)) for dim, (birth, death), _ in result]
 
-    img_scaled = (img * 255).astype(np.uint8)
-    img_rgb = cv2.cvtColor(img_scaled, cv2.COLOR_GRAY2RGB)
-    point_num = 0
-    weight_thre = 0.02
-    # 点をプロットし、座標情報を追加
-    for (dim, (birth, death)), (_, _, coordinates) in zip(filtered_diagram, result):
-        if dim == 0:
-            color = 'red'
-        else:
-            color = 'blue'
-            continue
+        frangi_img = frangi(1-img)
+        print("frangi max min",frangi_img.max(), frangi_img.min())
+        # cx.imshow(frangi_img, cmap='gray')
 
-        # birth, deathの点から対角線までの垂直に下した線のL1距離を計算
-        distance = np.abs(birth - death) / np.sqrt(2)
-        # print(f"distance: {distance}")
-        weight = distance * frangi_img[coordinates[0][0], coordinates[0][1]]
-        # print(f"weight: {weight}")
+        img_scaled = (img * 255).astype(np.uint8)
+        img_rgb = cv2.cvtColor(img_scaled, cv2.COLOR_GRAY2RGB)
+        point_num = 0
+        # 点をプロットし、座標情報を追加
+        for (dim, (birth, death)), (_, _, coordinates) in zip(filtered_diagram, result):
+            if dim == 0:
+                color = 'red'
+            else:
+                color = 'blue'
+                continue
 
-        # x軸distance、y軸frangiのグラフを描画
-        if weight > weight_thre:
-            ax.scatter(birth, death, c=color, s=10)
-            bx.scatter(distance, frangi_img[coordinates[0][0], coordinates[0][1]], c=color, s=10)
-            bx.annotate(f"({coordinates[0][0]}, {coordinates[0][1]})", (distance, frangi_img[coordinates[0][0], coordinates[0][1]]), xytext=(3, 3), textcoords='offset points', fontsize=8)
-            img_rgb[coordinates[0][0], coordinates[0][1]] = [255, 0, 0]
-            point_num += 1
-        else:
-            ax.scatter(birth, death, c='green', s=10)
-            bx.scatter(distance, frangi_img[coordinates[0][0], coordinates[0][1]], c='green', s=10)
-            continue
-        # ax.scatter(birth, death, c=color, s=10)
+            # birth, deathの点から対角線までの垂直に下した線のL1距離を計算
+            distance = np.abs(birth - death) / np.sqrt(2)
+            # print(f"distance: {distance}")
+            weight = distance * frangi_img[coordinates[0][0], coordinates[0][1]]
+            # print(f"weight: {weight}")
 
-        # 座標情報のテキストを作成
-        if coordinates[1] is None:
-            coord_text = f"({coordinates[0][0]}, {coordinates[0][1]})"
-        else:
-            coord_text = f"({coordinates[0][0]}, {coordinates[0][1]}) -> ({coordinates[1][0]}, {coordinates[1][1]})"
+            # x軸distance、y軸frangiのグラフを描画
+            if weight > weight_thre:
+                ax.scatter(birth, death, c=color, s=10)
+                bx.scatter(distance, frangi_img[coordinates[0][0], coordinates[0][1]], c=color, s=10)
+                bx.annotate(f"({coordinates[0][0]}, {coordinates[0][1]})", (distance, frangi_img[coordinates[0][0], coordinates[0][1]]), xytext=(3, 3), textcoords='offset points', fontsize=8)
+                img_rgb[coordinates[0][0], coordinates[0][1]] = [255, 0, 0]
+                point_num += 1
+            else:
+                ax.scatter(birth, death, c='green', s=10)
+                bx.scatter(distance, frangi_img[coordinates[0][0], coordinates[0][1]], c='green', s=10)
+                continue
+            # ax.scatter(birth, death, c=color, s=10)
 
-        # 点の横にテキストを追加
-        ax.annotate(coord_text, (birth, death), xytext=(3, 3), textcoords='offset points', fontsize=8)
+            # 座標情報のテキストを作成
+            if coordinates[1] is None:
+                coord_text = f"({coordinates[0][0]}, {coordinates[0][1]})"
+            else:
+                coord_text = f"({coordinates[0][0]}, {coordinates[0][1]}) -> ({coordinates[1][0]}, {coordinates[1][1]})"
 
-    # 対角線を描画
-    lims = [
-        np.min([ax.get_xlim(), ax.get_ylim()]),  # min of both axes
-        np.max([ax.get_xlim(), ax.get_ylim()]),  # max of both axes
-    ]
-    ax.plot(lims, lims, 'k-', alpha=0.3, zorder=0)
+            # 点の横にテキストを追加
+            ax.annotate(coord_text, (birth, death), xytext=(3, 3), textcoords='offset points', fontsize=8)
 
-    print(f"点の数: {point_num}")
-    ax.annotate(f"weight threshold: {weight_thre}", (0.7, 0.6), xytext=(3, 3), textcoords='offset points', fontsize=12)
-    ax.annotate(f"select point num: {point_num}", (0.7, 0.5), xytext=(3, 3), textcoords='offset points', fontsize=12)
-    ax.annotate(f"all point num: {len(filtered_diagram)}", (0.7, 0.4), xytext=(3, 3), textcoords='offset points', fontsize=12)
+        # 対角線を描画
+        lims = [
+            np.min([ax.get_xlim(), ax.get_ylim()]),  # min of both axes
+            np.max([ax.get_xlim(), ax.get_ylim()]),  # max of both axes
+        ]
+        ax.plot(lims, lims, 'k-', alpha=0.3, zorder=0)
 
-    ax.set_title(f'Persistence Diagram {i}')
-    ax.set_xlabel('Birth')
-    ax.set_ylabel('Death')
+        print(f"点の数: {point_num}")
+        ax.annotate(f"weight threshold: {weight_thre}", (0.7, 0.6), xytext=(3, 3), textcoords='offset points', fontsize=12)
+        ax.annotate(f"select point num: {point_num}", (0.7, 0.5), xytext=(3, 3), textcoords='offset points', fontsize=12)
+        ax.annotate(f"all point num: {len(filtered_diagram)}", (0.7, 0.4), xytext=(3, 3), textcoords='offset points', fontsize=12)
 
-    frangi_img = (frangi_img * 255).astype(np.uint8)
-    frangi_img = cv2.cvtColor(frangi_img, cv2.COLOR_GRAY2RGB)
-    concat_img = np.concatenate([img_rgb, frangi_img], axis=1)
-    axs[0, i].imshow(concat_img)
-    axs[0, i].axis('off')
-    axs[0, i].set_title("Image " + str(i)+ "  left:original right:frangi")
+        ax.set_title(f'Persistence Diagram {i}')
+        ax.set_xlabel('Birth')
+        ax.set_ylabel('Death')
 
-plt.tight_layout()
-plt.savefig("images_with_diagrams_and_coordinates.png")
+        frangi_img = (frangi_img * 255).astype(np.uint8)
+        frangi_img = cv2.cvtColor(frangi_img, cv2.COLOR_GRAY2RGB)
+        concat_img = np.concatenate([img_rgb, frangi_img], axis=1)
+        axs[0, i].imshow(concat_img)
+        axs[0, i].axis('off')
+        axs[0, i].set_title("Image " + str(i)+ "  left:original right:frangi")
+
+    plt.tight_layout()
+    plt.savefig(f"image_persistence_diagram_{k}.png")
 
 # for i, img in enumerate(image_list):
 #     # gudhiでの表示を行う
@@ -270,11 +273,11 @@ plt.savefig("images_with_diagrams_and_coordinates.png")
 # print("gudhi:", persistence)
 # print("cofaces:", cofaces)
 
-combined_images = np.array(image_list)
-img_batch = torch.tensor(combined_images, device=device, dtype=torch.float32).unsqueeze(1)
-cubical = CubicalComplex()
-wd_loss = WassersteinDistance(q=2)
-per_cc = cubical(img_batch)
+# combined_images = np.array(image_list)
+# img_batch = torch.tensor(combined_images, device=device, dtype=torch.float32).unsqueeze(1)
+# cubical = CubicalComplex()
+# wd_loss = WassersteinDistance(q=2)
+# per_cc = cubical(img_batch)
 # print(per_cc)
 
 # loss = wd_loss(per_cc, per_cc)
