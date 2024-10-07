@@ -11,49 +11,22 @@ from torch_topological.nn import CubicalComplex, WassersteinDistance
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-def match_cofaces_with_gudhi(image_data, cofaces, gudhi_persistence):
+def match_cofaces_with_gudhi(image_data, cofaces):
     height, width = image_data.shape
     result = []
 
-    # Regular pairs (finite persistence)
-    regular_pairs = []
     for dim, pairs in enumerate(cofaces[0]):
         for birth, death in pairs:
             birth_y, birth_x = np.unravel_index(birth, (height, width))
             death_y, death_x = np.unravel_index(death, (height, width))
-            regular_pairs.append((dim, ((birth_y, birth_x), (death_y, death_x))))
+            pers = (1.00-image_data.ravel()[birth], 1.00-image_data.ravel()[death])
+            result.append((dim, pers,((birth_y, birth_x), (death_y, death_x))))
 
-    # Infinite pairs
-    infinite_pairs = []
     for dim, births in enumerate(cofaces[1]):
         for birth in births:
             birth_y, birth_x = np.unravel_index(birth, (height, width))
-            infinite_pairs.append((dim, ((birth_y, birth_x), None)))
-
-    # Combine all pairs
-    all_pairs = regular_pairs + infinite_pairs
-
-    # Match with gudhi persistence
-    for gudhi_item in gudhi_persistence:
-        gudhi_dim, gudhi_persistence_value = gudhi_item
-
-        # Find corresponding coface
-        if gudhi_persistence_value[1] == float('inf'):
-            # Look for infinite pairs
-            for coface_item in infinite_pairs:
-                coface_dim, coface_coordinates = coface_item
-                if coface_dim == gudhi_dim:
-                    result.append((gudhi_dim, gudhi_persistence_value, coface_coordinates))
-                    infinite_pairs.remove(coface_item)  # Remove matched item
-                    break
-        else:
-            # Look for regular pairs
-            for coface_item in regular_pairs:
-                coface_dim, coface_coordinates = coface_item
-                if coface_dim == gudhi_dim:
-                    result.append((gudhi_dim, gudhi_persistence_value, coface_coordinates))
-                    regular_pairs.remove(coface_item)  # Remove matched item
-                    break
+            pers = (1.00-image_data.ravel()[birth], 1.0)
+            result.append((dim, pers, ((birth_y, birth_x), None)))
 
     return result
 
@@ -94,33 +67,33 @@ image_list = []
 
 
 np.random.seed(2)
-weight_thre = [0.05, 0.04, 0.03, 0.02, 0.01, 0.005]
+weight_thre = [0.1, 0.05, 0.03]
 image = sitk.GetArrayFromImage(sitk.ReadImage("img/200.mhd"))
 
-for i in range(3):
-    # ランダムな場所から64*64に切り取る
-    x = np.random.randint(0, image.shape[0] - 64)
-    y = np.random.randint(0, image.shape[1] - 64)
+# for i in range(3):
+#     # ランダムな場所から64*64に切り取る
+#     x = np.random.randint(0, image.shape[0] - 64)
+#     y = np.random.randint(0, image.shape[1] - 64)
 
-    while True:
-        x = np.random.randint(0, image.shape[0] - 64)
-        y = np.random.randint(0, image.shape[1] - 64)
-        org_image = image[x:x+64, y:y+64]
-        if (np.count_nonzero(org_image==0)/np.count_nonzero(org_image>=0) <= 0.6):#黒の割合
-            break
+#     while True:
+#         x = np.random.randint(0, image.shape[0] - 64)
+#         y = np.random.randint(0, image.shape[1] - 64)
+#         org_image = image[x:x+64, y:y+64]
+#         if (np.count_nonzero(org_image==0)/np.count_nonzero(org_image>=0) <= 0.6):#黒の割合
+#             break
 
-    org_image = (org_image - org_image.min()) / (org_image.max() - org_image.min())
-    image_list.append(org_image)
+#     org_image = (org_image - org_image.min()) / (org_image.max() - org_image.min())
+#     image_list.append(org_image)
 
-# image = sitk.GetArrayFromImage(sitk.ReadImage("img/1.mhd"))
-# image = (image - image.min()) / (image.max() - image.min())
-# image_list.append(image)
-# image = sitk.GetArrayFromImage(sitk.ReadImage("img/40.mhd"))
-# image = (image - image.min()) / (image.max() - image.min())
-# image_list.append(image)
-# image = sitk.GetArrayFromImage(sitk.ReadImage("img/100.mhd"))
-# image = (image - image.min()) / (image.max() - image.min())
-# image_list.append(image)
+image = sitk.GetArrayFromImage(sitk.ReadImage("img/1.mhd"))
+image = (image - image.min()) / (image.max() - image.min())
+image_list.append(image)
+image = sitk.GetArrayFromImage(sitk.ReadImage("img/40.mhd"))
+image = (image - image.min()) / (image.max() - image.min())
+image_list.append(image)
+image = sitk.GetArrayFromImage(sitk.ReadImage("img/100.mhd"))
+image = (image - image.min()) / (image.max() - image.min())
+image_list.append(image)
 
 ori_image_list = []
 ori1_image = sitk.GetArrayFromImage(sitk.ReadImage("img/1_ori.mhd"))
@@ -161,7 +134,7 @@ for k, weight_thre in enumerate(weight_thre):
         persistence = cc.persistence()
         cofaces = cc.cofaces_of_persistence_pairs()
 
-        result = match_cofaces_with_gudhi(img, cofaces, persistence)
+        result = match_cofaces_with_gudhi(img, cofaces)
 
         # print(f"persistence for Image {i}:", persistence)
         # print(f"cofaces for Image {i}:", cofaces)
