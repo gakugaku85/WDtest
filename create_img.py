@@ -112,12 +112,12 @@ os.makedirs("images", exist_ok=True)
 
 image = np.zeros((100, 100)) + 64
 center_line = image.shape[0] // 2
-image[center_line - 1 : center_line + 2, :] = 192
+image[center_line - 1 : center_line, :] = 192
 hr_size = (64, 64)
 lr_size = (16, 16)
-line_space = 3
+line_space = 1
 
-for i in range(5, 8):
+for i in range(3, 7):
     original_mhd_path = "images/original"
     img_sigma_path = "images/sigma{}".format(2**i)
     original_mhd_val1_path = "images/original_val1"

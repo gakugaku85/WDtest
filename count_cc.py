@@ -59,73 +59,71 @@ def main(path, sigma):
                 original_image = sitk.GetArrayFromImage(sitk.ReadImage(mhd_file_path))
                 original_val2_images.append(original_image)
 
-
     result_path = "../SR3/SR3_wdTest/experiments/"
     result_path = result_path + path
     result_path = result_path + "/results/"
     assert os.path.isdir(result_path), '{:s} is not a valid directory'.format(result_path)
 
-    avg_val1_components = []
-    avg_val2_components = []
+    df2 = pd.DataFrame(columns=["iteration_num", "val1_num_components", "val2_num_components"])
 
-    df2 = pd.DataFrame(columns=["val", "num_components"])
     for dir_path, _, fnames in natsorted(os.walk(result_path)):
-        if dir_path.split("/")[-1] == "val1":
+        if dir_path.split("/")[-1] in ["val1", "val2"]:
+            val1_num_components = []
+            val2_num_components = []
+            validation_type = dir_path.split("/")[-1]
+            iteration_num = dir_path.split("/")[-2]
             i = 0
-            num_components = []
-            df = pd.DataFrame(columns=["fname", "num_components"])
             for fname in natsorted(fnames):
                 if fname.endswith(".mhd"):
                     mhd_file_path = os.path.join(dir_path, fname)
                     print("mhd_file_path: ", mhd_file_path)
                     image = sitk.GetArrayFromImage(sitk.ReadImage(mhd_file_path))
+                    cv2.imwrite(dir_path + "/images/" + fname.split(".")[0] + "_image" + ".png", image)
                     image = image[:, 64:128]
-                    binary_image = binary_threshold(image, threshold_value)
-                    cc = create_connected_components_image(binary_image, binary_threshold(original_val1_images[i], threshold_value), fname, dir_path)
-                    # output cc as csv
-                    df.loc[i] = [fname, cc]
-                    num_components.append(cc)
-                    i += 1
-            df.to_csv(dir_path + "/cc.csv")
-            val1_cc = np.mean(num_components)
-            df2.loc[len(df2)] = [dir_path.split("/")[-1], val1_cc]
-            avg_val1_components.append(val1_cc)
-            print(f"val1平均連結成分数: {np.mean(num_components)}")
 
-        elif dir_path.split("/")[-1] == "val2":
-            i = 0
-            num_components = []
-            df = pd.DataFrame(columns=["fname", "num_components"])
-            for fname in natsorted(fnames):
-                if fname.endswith(".mhd"):
-                    mhd_file_path = os.path.join(dir_path, fname)
-                    print("mhd_file_path: ", mhd_file_path)
-                    image = sitk.GetArrayFromImage(sitk.ReadImage(mhd_file_path))
-                    image = image[:, 64:128]
-                    binary_image = binary_threshold(image, threshold_value)
-                    cc = create_connected_components_image(binary_image, binary_threshold(original_val1_images[i], threshold_value), fname, dir_path)
-                    # output cc as csv
-                    df.loc[i] = [fname, cc]
-                    num_components.append(cc)
+                    if validation_type == "val1":
+                        cc = create_connected_components_image(binary_threshold(image, threshold_value), binary_threshold(original_val1_images[i], threshold_value), fname, dir_path)
+                        val1_num_components.append(cc)
+                    elif validation_type == "val2":
+                        cc = create_connected_components_image(binary_threshold(image, threshold_value), binary_threshold(original_val2_images[i], threshold_value), fname, dir_path)
+                        val2_num_components.append(cc)
                     i += 1
-            df.to_csv(dir_path + "/cc.csv")
-            val2_cc = np.mean(num_components)
-            df2.loc[len(df2)] = [dir_path.split("/")[-1], val2_cc]
-            avg_val2_components.append(val2_cc)
-            print(f"val2平均連結成分数: {np.mean(num_components)}")
-    df2.to_csv(result_path + "val_cc.csv")
-    plt.plot(avg_val1_components, label="val1")
-    plt.plot(avg_val2_components, label="val2")
+
+            avg_cc_val1 = np.mean(val1_num_components)
+            avg_cc_val2 = np.mean(val2_num_components)
+
+            # validation_num = len(df2)
+            # if validation_type == "val1":
+            #     if validation_num >= len(df2):
+            #         df2.loc[validation_num] = [validation_num, avg_cc_val1, avg_cc_val2]
+            #     else:
+            #         df2.loc[validation_num, "val1_num_components"] = avg_cc
+            # elif validation_type == "val2":
+            #     if validation_num >= len(df2):
+            #         df2.loc[validation_num] = [validation_num, None, avg_cc]
+            #     else:
+            #         df2.loc[validation_num, "val2_num_components"] = avg_cc
+            if validation_type == "val1":
+                df2.loc[len(df2)] = [iteration_num, avg_cc_val1, None]
+            if validation_type == "val2":
+                df2.loc[len(df2)-1, "val2_num_components"] = avg_cc_val2
+
+            # print(f"{validation_type}平均連結成分数: {avg_cc}")
+
+    df2.to_csv(result_path + "val_cc_combined.csv", index=False)
+    plt.plot(df2["val1_num_components"], label="val1")
+    plt.plot(df2["val2_num_components"], label="val2")
     plt.title("sigma={} TPCC".format(sigma))
     plt.legend()
     plt.xlabel("validation num")
     plt.ylabel("TPCC num")
-    plt.savefig(result_path + "val_cc.png")
+    plt.savefig(result_path + "val_cc_combined.png")
     plt.clf()
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--path", type=str, help="path to result folder")
-    parser.add_argument("-s", "--sigma", type=int, default=64 ,help="sigma value")
+    parser.add_argument("-s", "--sigma", type=int, default=8 ,help="sigma value")
     args = parser.parse_args()
     main(args.path, args.sigma)

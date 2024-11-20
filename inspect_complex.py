@@ -7,7 +7,7 @@ import cv2
 from torch import nn
 import SimpleITK as sitk
 import time
-from torch_topological.nn import CubicalComplex, WassersteinDistance
+# from torch_topological.nn import CubicalComplex, WassersteinDistance
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -67,7 +67,7 @@ image_list = []
 
 
 np.random.seed(2)
-weight_thre = [0.1, 0.05, 0.03]
+weight_thre = [0.1, 0.05, 0.01]
 image = sitk.GetArrayFromImage(sitk.ReadImage("img/200.mhd"))
 
 # for i in range(3):
