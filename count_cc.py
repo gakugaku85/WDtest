@@ -124,6 +124,6 @@ def main(path, sigma):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--path", type=str, help="path to result folder")
-    parser.add_argument("-s", "--sigma", type=int, default=8 ,help="sigma value")
+    parser.add_argument("-s", "--sigma", type=int, default=16 ,help="sigma value")
     args = parser.parse_args()
     main(args.path, args.sigma)
