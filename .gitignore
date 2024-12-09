@@ -178,7 +178,7 @@ pyrightconfig.json
 data/*
 result/*
 images/*
-images_1/*
+images_3pixel/*
 TopologyLayer/*
 Topological-VAE/*
 torchph/*
@@ -188,4 +188,4 @@ gudhi*
 pytorch-topological/
 *.mhd
 *.raw
-img/*
+img_for_slide/*

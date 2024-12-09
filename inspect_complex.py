@@ -67,8 +67,7 @@ image_list = []
 
 
 np.random.seed(2)
-weight_thre = [0.1, 0.05, 0.01]
-image = sitk.GetArrayFromImage(sitk.ReadImage("img/200.mhd"))
+weight_thre = [0.1, 0.09, 0.08, 0.07, 0.06, 0.05, 0.04, 0.03, 0.02, 0.01]
 
 # for i in range(3):
 #     # ランダムな場所から64*64に切り取る
@@ -85,20 +84,20 @@ image = sitk.GetArrayFromImage(sitk.ReadImage("img/200.mhd"))
 #     org_image = (org_image - org_image.min()) / (org_image.max() - org_image.min())
 #     image_list.append(org_image)
 
-image = sitk.GetArrayFromImage(sitk.ReadImage("img/1.mhd"))
+image = sitk.GetArrayFromImage(sitk.ReadImage("img_for_slide/1.mhd"))
 image = (image - image.min()) / (image.max() - image.min())
 image_list.append(image)
-image = sitk.GetArrayFromImage(sitk.ReadImage("img/40.mhd"))
+image = sitk.GetArrayFromImage(sitk.ReadImage("img_for_slide/40.mhd"))
 image = (image - image.min()) / (image.max() - image.min())
 image_list.append(image)
-image = sitk.GetArrayFromImage(sitk.ReadImage("img/100.mhd"))
+image = sitk.GetArrayFromImage(sitk.ReadImage("img_for_slide/100.mhd"))
 image = (image - image.min()) / (image.max() - image.min())
 image_list.append(image)
 
 ori_image_list = []
-ori1_image = sitk.GetArrayFromImage(sitk.ReadImage("img/1_ori.mhd"))
-ori40_image = sitk.GetArrayFromImage(sitk.ReadImage("img/40_ori.mhd"))
-ori100_image = sitk.GetArrayFromImage(sitk.ReadImage("img/100_ori.mhd"))
+ori1_image = sitk.GetArrayFromImage(sitk.ReadImage("img_for_slide/1_ori.mhd"))
+ori40_image = sitk.GetArrayFromImage(sitk.ReadImage("img_for_slide/40_ori.mhd"))
+ori100_image = sitk.GetArrayFromImage(sitk.ReadImage("img_for_slide/100_ori.mhd"))
 ori_image_list.append(ori1_image)
 ori_image_list.append(ori40_image)
 ori_image_list.append(ori100_image)
@@ -221,7 +220,7 @@ for k, weight_thre in enumerate(weight_thre):
         axs[0, i].set_title("Image " + str(i)+ "  left:original right:frangi")
 
     plt.tight_layout()
-    plt.savefig(f"image_persistence_diagram_{k}.png")
+    plt.savefig(f"img_for_slide/image_persistence_diagram_{weight_thre}.png")
 
 # for i, img in enumerate(image_list):
 #     # gudhiでの表示を行う

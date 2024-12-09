@@ -117,9 +117,9 @@ hr_size = (64, 64)
 lr_size = (16, 16)
 line_space = 1
 
-for i in range(3, 7):
+for i in range(9, 13):
     original_mhd_path = "images/original"
-    img_sigma_path = "images/sigma{}".format(2**i)
+    img_sigma_path = "images/sigma{}".format(i)
     original_mhd_val1_path = "images/original_val1"
     original_mhd_val2_path = "images/original_val2"
     hr_folder_mhd = img_sigma_path + "/hr_64"
@@ -145,9 +145,9 @@ for i in range(3, 7):
     os.makedirs(sr_folder_mhd_val2, exist_ok=True)
 
     noisy_images = []
-    for j in tqdm(range(0, 180), desc="{}sigma Creating images".format(2**i)):
+    for j in tqdm(range(0, 180), desc="{}sigma Creating images".format(i)):
         rotated_image = rotate_image(image, j)
-        noisy_image = create_noisy_image(rotated_image, 1, 2**i)
+        noisy_image = create_noisy_image(rotated_image, 1, i)
 
         norm_image = normalize_image(noisy_image)
 

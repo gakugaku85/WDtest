@@ -12,7 +12,7 @@ from natsort import natsorted
 from PIL import Image, ImageDraw
 from skimage import measure
 from skimage.color import label2rgb
-
+from icecream import ic
 
 def make_mp4(image, fname, dir_path):
     print(dir_path, fname)
@@ -125,7 +125,7 @@ def homologize_persistence(image_data, persistence, output_dir, output_file_name
 def create_persistent_diagram(ori_image_data, fname, dir_path):
 
     image_list = ["LR", "SR", "HR"]
-    output_dir = dir_path + "/pd"
+    output_dir = dir_path + "/pd/"
     os.makedirs(output_dir, exist_ok=True)
     ori_image_data = ori_image_data.astype(np.uint8)
 
@@ -143,7 +143,7 @@ def create_persistent_diagram(ori_image_data, fname, dir_path):
             if death[1] == float("inf"):
                 persistence[idx] = (birth, (death[0], 255))
 
-        homologize_persistence(image_data, persistence, output_dir, output_file_name, image_name=image_name)
+        # homologize_persistence(image_data, persistence, output_dir, output_file_name, image_name=image_name)
 
         output_file_path = save_persistent_diagram(persistence, output_dir, output_file_name + "_" + image_name)
         image_paths.append(output_file_path)
@@ -161,7 +161,8 @@ def main(path):
     assert os.path.isdir(result_path), '{:s} is not a valid directory'.format(result_path)
 
     for dir_path, _, fnames in natsorted(os.walk(result_path)):
-        if (dir_path.split("/")[-1] == "val1" or dir_path.split("/")[-1] == "val2") and dir_path.split("/")[-2] == "10000":
+        ic(dir_path)
+        if (dir_path.split("/")[-1] == "val1" or dir_path.split("/")[-1] == "val2") and int(dir_path.split("/")[-2]) >= 10000:
             for fname in natsorted(fnames):
                 if fname.endswith(".mhd"):
                     mhd_file_path = os.path.join(dir_path, fname)
