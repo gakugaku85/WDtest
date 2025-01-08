@@ -6,6 +6,7 @@ import numpy as np
 import SimpleITK as sitk
 from PIL import Image
 from tqdm import tqdm
+from skimage.filters import frangi
 
 
 def calculate_snr(image, noise_sigma):
@@ -54,10 +55,10 @@ def create_noisy_image(image, blur_sigma, noise_sigma):
     kennel_size = 7
     mean = 0
 
-    blurred_image = cv2.GaussianBlur(image, (kennel_size, kennel_size), blur_sigma)
+    image = cv2.GaussianBlur(image, (kennel_size, kennel_size), blur_sigma)
 
-    noise = np.random.normal(mean, noise_sigma, blurred_image.shape).astype(np.float64)
-    noisy_image = cv2.add(blurred_image, noise)
+    noise = np.random.normal(mean, noise_sigma, image.shape).astype(np.float64)
+    noisy_image = cv2.add(image, noise)
 
     noisy_snr = calculate_snr(image, noise_sigma)
 
@@ -117,7 +118,7 @@ hr_size = (64, 64)
 lr_size = (16, 16)
 line_space = 1
 
-for i in range(9, 13):
+for i in range(14, 15):
     original_mhd_path = "images/original"
     img_sigma_path = "images/sigma{}".format(i)
     original_mhd_val1_path = "images/original_val1"
@@ -125,24 +126,30 @@ for i in range(9, 13):
     hr_folder_mhd = img_sigma_path + "/hr_64"
     lr_folder_mhd = img_sigma_path + "/lr_16"
     sr_folder_mhd = img_sigma_path + "/sr_16_64"
+    frangi_folder_mhd = img_sigma_path + "/frangi"
     hr_folder_mhd_val1 = img_sigma_path + "_val1/hr_64"
     lr_folder_mhd_val1 = img_sigma_path + "_val1/lr_16"
     sr_folder_mhd_val1 = img_sigma_path + "_val1/sr_16_64"
+    frangi_folder_mhd_val1 = img_sigma_path + "_val1/frangi"
     hr_folder_mhd_val2 = img_sigma_path + "_val2/hr_64"
     lr_folder_mhd_val2 = img_sigma_path + "_val2/lr_16"
     sr_folder_mhd_val2 = img_sigma_path + "_val2/sr_16_64"
+    frangi_folder_mhd_val2 = img_sigma_path + "_val2/frangi"
     os.makedirs(original_mhd_path, exist_ok=True)
     os.makedirs(original_mhd_val1_path, exist_ok=True)
     os.makedirs(original_mhd_val2_path, exist_ok=True)
     os.makedirs(hr_folder_mhd, exist_ok=True)
     os.makedirs(lr_folder_mhd, exist_ok=True)
     os.makedirs(sr_folder_mhd, exist_ok=True)
+    os.makedirs(frangi_folder_mhd, exist_ok=True)
     os.makedirs(hr_folder_mhd_val1, exist_ok=True)
     os.makedirs(lr_folder_mhd_val1, exist_ok=True)
     os.makedirs(sr_folder_mhd_val1, exist_ok=True)
+    os.makedirs(frangi_folder_mhd_val1, exist_ok=True)
     os.makedirs(hr_folder_mhd_val2, exist_ok=True)
     os.makedirs(lr_folder_mhd_val2, exist_ok=True)
     os.makedirs(sr_folder_mhd_val2, exist_ok=True)
+    os.makedirs(frangi_folder_mhd_val2, exist_ok=True)
 
     noisy_images = []
     for j in tqdm(range(0, 180), desc="{}sigma Creating images".format(i)):
@@ -151,19 +158,24 @@ for i in range(9, 13):
 
         norm_image = normalize_image(noisy_image)
 
+        frangi_image = frangi(norm_image, black_ridges=False)
+
         if j % 3 == 0:
             if j % 6 == 0:
                 save_mhd(rotated_image, original_mhd_val1_path + "/{}".format(j))
                 hr_image = resize_mhd_save(norm_image, hr_folder_mhd_val1, hr_size, j)
+                frangi_image = resize_mhd_save(frangi_image, frangi_folder_mhd_val1, hr_size, j)
                 lr_image = resize_mhd_save(hr_image, lr_folder_mhd_val1, lr_size, j)
                 sr_image = resize_mhd_save(lr_image, sr_folder_mhd_val1, hr_size, j)
             else:
                 save_mhd(rotated_image, original_mhd_val2_path + "/{}".format(j))
                 hr_image = resize_mhd_save(norm_image, hr_folder_mhd_val2, hr_size, j)
+                frangi_image = resize_mhd_save(frangi_image, frangi_folder_mhd_val2, hr_size, j)
                 lr_image = resize_mhd_save(hr_image, lr_folder_mhd_val2, lr_size, j)
                 sr_image = resize_mhd_save(lr_image, sr_folder_mhd_val2, hr_size, j)
         else:
             save_mhd(rotated_image, original_mhd_path + "/{}".format(j))
             hr_image = resize_mhd_save(norm_image, hr_folder_mhd, hr_size, j)
+            frangi_image = resize_mhd_save(frangi_image, frangi_folder_mhd, hr_size, j)
             lr_image = resize_mhd_save(hr_image, lr_folder_mhd, lr_size, j)
             sr_image = resize_mhd_save(lr_image, sr_folder_mhd, hr_size, j)

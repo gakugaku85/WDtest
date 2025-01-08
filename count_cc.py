@@ -8,18 +8,19 @@ import cv2
 from natsort import natsorted
 from skimage.color import label2rgb
 import pandas as pd
+from skimage.filters import frangi
 
 
 def binary_threshold(image, threshold):
     binary_image = (image > threshold).astype(np.uint8)
     return binary_image
 
-def create_connected_components_image(image, original_image, fname, dir_path):
+def create_connected_components_image(image, original_image, fname, dir_path, frangi=True):
     os.makedirs(dir_path + "/images/", exist_ok=True)
     cv2.imwrite(dir_path + "/images/" + fname.split(".")[0] + "_original" + ".png", original_image * 255)
     cv2.imwrite(dir_path + "/images/" + fname.split(".")[0] + "_binary" + ".png", image * 255)
 
-    labeled_image = measure.label(image, connectivity=1)
+    labeled_image = measure.label(image, connectivity=2)
     # output color labels
     colored_labels = label2rgb(labeled_image, bg_label=0)
     cv2.imwrite(dir_path + "/images/" + fname.split(".")[0] + "color_labeled" + ".png", colored_labels * 255)
@@ -38,6 +39,7 @@ def create_connected_components_image(image, original_image, fname, dir_path):
 
 def main(path, sigma):
     threshold_value = 128
+    be_frangi = False
 
     original_val1_path = "images/original_val1/"
     assert os.path.isdir(original_val1_path), '{:s} is not a valid directory'.format(original_val1_path)
@@ -80,6 +82,10 @@ def main(path, sigma):
                     image = sitk.GetArrayFromImage(sitk.ReadImage(mhd_file_path))
                     cv2.imwrite(dir_path + "/images/" + fname.split(".")[0] + "_image" + ".png", image)
                     image = image[:, 64:128]
+
+                    if be_frangi:
+                        image = frangi(image, black_ridges=False)
+                        threshold_value = 10
 
                     if validation_type == "val1":
                         cc = create_connected_components_image(binary_threshold(image, threshold_value), binary_threshold(original_val1_images[i], threshold_value), fname, dir_path)
@@ -124,6 +130,6 @@ def main(path, sigma):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--path", type=str, help="path to result folder")
-    parser.add_argument("-s", "--sigma", type=int, default=16 ,help="sigma value")
+    parser.add_argument("-s", "--sigma", type=int, default=8 ,help="sigma value")
     args = parser.parse_args()
     main(args.path, args.sigma)

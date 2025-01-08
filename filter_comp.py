@@ -4,7 +4,6 @@ from skimage import data
 from skimage.filters import frangi, sato, hessian, meijering
 from skimage.color import rgb2gray
 import SimpleITK as sitk
-from soft_frangi.soft_frangi_filter2d import SoftFrangiFilter2D
 import torch
 import gudhi as gd
 
@@ -37,13 +36,6 @@ sato_result = sato(image)
 
 hessian_result = hessian(image)
 meijering_result = meijering(image)
-
-# ライブラリのSoft Frangiフィルターの適用
-tensor_image = torch.tensor(org_image).unsqueeze(0).unsqueeze(0).float()
-soft_frangi_filter = SoftFrangiFilter2D(channels=1, kernel_size=7, sigmas=range(1, 10, 2), beta=0.5, c=0.5, device='cpu')
-soft_frangi_response = soft_frangi_filter(tensor_image)
-np_image = soft_frangi_response.squeeze().detach().numpy()
-print("soft_frangi_result", np_image.max(), np_image.min())
 
 # パーシステントダイアグラムの生成
 def compute_persistence_diagram(image):

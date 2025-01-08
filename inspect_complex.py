@@ -222,17 +222,17 @@ for k, weight_thre in enumerate(weight_thre):
     plt.tight_layout()
     plt.savefig(f"img_for_slide/image_persistence_diagram_{weight_thre}.png")
 
-# for i, img in enumerate(image_list):
-#     # gudhiでの表示を行う
-#     fig, axs = plt.subplots(1, 2, figsize=(10, 5))
-#     cc = gd.CubicalComplex(
-#         dimensions=img.shape, top_dimensional_cells=1.0-img.flatten()
-#     )
-#     persistence = cc.persistence()
+for i, img in enumerate(image_list):
+    # gudhiでの表示を行う
+    fig, axs = plt.subplots(1, 2, figsize=(10, 5))
+    cc = gd.CubicalComplex(
+        dimensions=img.shape, top_dimensional_cells=1.0-img.flatten()
+    )
+    persistence = cc.persistence()
 
-#     gd.plot_persistence_diagram(persistence)
-#     plt.title(f"Image {i} Persistence Diagram")
-#     plt.savefig(f"image_{i}_persistence_diagram.png")
+    gd.plot_persistence_diagram(persistence)
+    plt.title(f"Image {i} Persistence Diagram")
+    plt.savefig(f"image_{i}_persistence_diagram.png")
 
 # print("gudhi:", persistences)
 
