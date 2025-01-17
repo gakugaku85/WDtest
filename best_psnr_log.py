@@ -4,7 +4,7 @@ import re
 psnr_data = []
 pattern = r'<epoch:(\d+), iter:\s+([\d,]+)> psnr: ([\d.e+-]+)'
 
-log_contents = "../SR3/SR3_wdTest/experiments/s14_ori/logs/val.log"
+log_contents = "../SR3/SR3_wdTest/experiments/wdtest_16_64_250113_162652/logs/val.log"
 with open(log_contents, 'r') as f:
     log_contents = f.read()
 
@@ -23,11 +23,11 @@ max_psnr_entry = sorted(psnr_data, key=lambda x: x[3], reverse=True)
 
 
 for i in range(100):
-    if max_psnr_entry[i][2] < 100000 and max_psnr_entry[i][0] == "val1":
+    if max_psnr_entry[i][2] < 150000 and max_psnr_entry[i][0] == "val1":
         print(f"Validation: {max_psnr_entry[i][0]}, Iteration: {max_psnr_entry[i][2]}, PSNR: {max_psnr_entry[i][3]}")
         break
 
 for i in range(len(max_psnr_entry)):
-    if max_psnr_entry[i][2] < 100000 and max_psnr_entry[i][0] == "val2":
+    if max_psnr_entry[i][2] < 150000 and max_psnr_entry[i][0] == "val2":
         print(f"Validation: {max_psnr_entry[i][0]}, Iteration: {max_psnr_entry[i][2]}, PSNR: {max_psnr_entry[i][3]}")
         break

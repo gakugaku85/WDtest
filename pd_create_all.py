@@ -238,7 +238,7 @@ def persistent_homology(image_data, image_name="HR"):
         distance = np.abs(birth - death) / np.sqrt(2)
         weight = distance * frangi_img[coordinates[0][0], coordinates[0][1]]
 
-        weight_threshold = 0.01
+        weight_threshold = 0.05
         if weight > weight_threshold:
             new_result.append([birth, death])
 
@@ -251,7 +251,7 @@ def main(path):
     assert os.path.isdir(result_path), '{:s} is not a valid directory'.format(result_path)
     wd_losses = []
     for dir_path, _, fnames in natsorted(os.walk(result_path)):
-        if (dir_path.split("/")[-1] == "val1" or dir_path.split("/")[-1] == "val2") and int(dir_path.split("/")[-2]) >= 100:
+        if (dir_path.split("/")[-1] == "val1" or dir_path.split("/")[-1] == "val2") and int(dir_path.split("/")[-2]) >= 98000:
             ic(dir_path)
             wd_loss = []
             for fname in natsorted(fnames):

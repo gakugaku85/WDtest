@@ -70,6 +70,7 @@ def main(path, sigma):
 
     for dir_path, _, fnames in natsorted(os.walk(result_path)):
         if dir_path.split("/")[-1] in ["val1", "val2"]:
+            df = pd.DataFrame(columns=["fname", "cc"])
             val1_num_components = []
             val2_num_components = []
             validation_type = dir_path.split("/")[-1]
@@ -89,11 +90,15 @@ def main(path, sigma):
 
                     if validation_type == "val1":
                         cc = create_connected_components_image(binary_threshold(image, threshold_value), binary_threshold(original_val1_images[i], threshold_value), fname, dir_path)
+                        df.loc[len(df)] = [fname, cc]
                         val1_num_components.append(cc)
                     elif validation_type == "val2":
                         cc = create_connected_components_image(binary_threshold(image, threshold_value), binary_threshold(original_val2_images[i], threshold_value), fname, dir_path)
+                        df.loc[len(df)] = [fname, cc]
                         val2_num_components.append(cc)
                     i += 1
+
+            df.to_csv(dir_path + "_cc.csv", index=False)
 
             avg_cc_val1 = np.mean(val1_num_components)
             avg_cc_val2 = np.mean(val2_num_components)

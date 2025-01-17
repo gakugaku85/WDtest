@@ -189,3 +189,4 @@ pytorch-topological/
 *.mhd
 *.raw
 img_for_slide/*
+binarized_images/*
